@@ -8,9 +8,9 @@ import os
 import qdarkstyle
 import pathlib
 
-from connectionPanel import ConnectionPanel
+from .connectionPanel import ConnectionPanel
 
-class masterWindow(QMainWindow):
+class MasterWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -18,7 +18,7 @@ class masterWindow(QMainWindow):
         self.setWindowTitle("Master Window")
         p = pathlib.Path(__file__)
         sepa = os.sep
-        self.icon = str(p.parent) + sepa+'icons' + sepa
+        self.icon = str(p.parent) + sepa + 'icons' + sepa
 
         self.setWindowIcon(QIcon(self.icon+'LOA.png'))
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
@@ -82,6 +82,6 @@ class masterWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = masterWindow()
+    window = MasterWindow()
     window.show()
     sys.exit(app.exec())
