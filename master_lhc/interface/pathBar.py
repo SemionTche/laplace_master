@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import (
     QWidget, QLineEdit, QPushButton, QHBoxLayout, QFileDialog
 )
+from PyQt6.QtCore import Qt
 
 class PathBar(QWidget):
 
-    def __init__(self):
+    def __init__(self, path: str | None = None):
         super().__init__()
 
         self.setMaximumWidth(1000)
@@ -16,6 +17,7 @@ class PathBar(QWidget):
         self.save_entry = QLineEdit()
         self.save_entry.setPlaceholderText("Path to save data")
         self.save_entry.setMaximumWidth(800)
+        self.save_entry.setFocusPolicy(Qt.FocusPolicy.ClickFocus) # focus only if the item is clicked
 
         browse_button = QPushButton("Browse")
         browse_button.clicked.connect(self.select_save_path)
@@ -25,6 +27,9 @@ class PathBar(QWidget):
 
         path_layout.setStretch(0, 1)  # QLineEdit grows
         path_layout.setStretch(1, 0)  # Button stays compact
+
+        if path is not None:
+             self.set_path(path)
     
     @property
     def path_to_save(self):

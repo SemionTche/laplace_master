@@ -19,13 +19,13 @@ class MasterWindow(QMainWindow):
         
         super().__init__()
 
-        self.settings = QSettings("interface.ini")
-
         # Set window title
         self.setWindowTitle("Master Window")
         p = pathlib.Path(__file__)
         sepa = os.sep
         self.icon = str(p.parent) + sepa + 'icons' + sepa
+
+        self.settings = QSettings(str(p.parent / "interface.ini"), QSettings.Format.IniFormat)
 
         self.setWindowIcon(QIcon(self.icon+'LOA.png'))
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
@@ -40,7 +40,8 @@ class MasterWindow(QMainWindow):
         central_widget.setLayout(main_layout)
 
         # path
-        self.path_bar = PathBar()
+        saved_path = self.settings.value("pathSavingEntry", defaultValue="", type=str)
+        self.path_bar = PathBar(saved_path)
 
         path_container = QHBoxLayout()
         path_container.addStretch()             # add space
@@ -48,10 +49,6 @@ class MasterWindow(QMainWindow):
         path_container.addStretch()
 
         main_layout.addLayout(path_container)
-
-        # last_path = self.settings.value("paths/save_path", "", type=str)
-        # if last_path:
-        #     self.path_bar.set_path(last_path)
 
         # 2 x 2 grid
         grid_layout = QGridLayout()
@@ -100,6 +97,14 @@ class MasterWindow(QMainWindow):
         grid_layout.setRowStretch(1, 1)
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 1)
+
+        self.actions()
+
+    def actions(self):
+        # update the 'interface.ini' file
+        self.path_bar.save_entry.textChanged.connect(
+            lambda text: self.settings.setValue("pathSavingEntry", text)
+        )
 
     @property
     def path_to_save(self):
