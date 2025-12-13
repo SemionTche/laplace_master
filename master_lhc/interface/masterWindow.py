@@ -12,6 +12,7 @@ import pathlib
 
 from .connectionPanel import ConnectionPanel
 from .pathBar import PathBar
+from .serverBar import ServerBar
 
 class MasterWindow(QMainWindow):
     
@@ -39,16 +40,23 @@ class MasterWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
+        # top line
+        top_container = QHBoxLayout()
+
         # path
         saved_path = self.settings.value("pathSavingEntry", defaultValue="", type=str)
         self.path_bar = PathBar(saved_path)
 
-        path_container = QHBoxLayout()
-        path_container.addStretch()             # add space
-        path_container.addWidget(self.path_bar)
-        path_container.addStretch()
+        top_container.addStretch()          # add space
+        top_container.addWidget(self.path_bar)
+        top_container.addStretch()
 
-        main_layout.addLayout(path_container)
+        # add server
+        self.server_bar = ServerBar()
+        top_container.addWidget(self.server_bar)
+        top_container.addStretch()
+
+        main_layout.addLayout(top_container)
 
         # 2 x 2 grid
         grid_layout = QGridLayout()
@@ -67,8 +75,8 @@ class MasterWindow(QMainWindow):
         diags_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         diags_layout.addWidget(diags_label)
 
-        diagsConnectionPanel = ConnectionPanel()
-        diags_layout.addWidget(diagsConnectionPanel)
+        self.diagsConnectionPanel = ConnectionPanel()
+        diags_layout.addWidget(self.diagsConnectionPanel)
 
         # Bottom-left label
         motors_widget = QWidget()
@@ -105,6 +113,11 @@ class MasterWindow(QMainWindow):
         self.path_bar.save_entry.textChanged.connect(
             lambda text: self.settings.setValue("pathSavingEntry", text)
         )
+        self.server_bar.server_added.connect(self.route_server)
+
+    def route_server(self, address: str):
+        # Later this can route to motors or diags
+        self.diagsConnectionPanel.add_server(address)
 
     @property
     def path_to_save(self):

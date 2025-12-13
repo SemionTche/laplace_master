@@ -1,11 +1,12 @@
 from PyQt6.QtWidgets import (
-    QWidget, QLineEdit, QPushButton, QHBoxLayout, QFileDialog
+    QWidget, QLineEdit, QPushButton, QHBoxLayout, QFileDialog, QLabel
 )
 from PyQt6.QtCore import Qt
 
 class PathBar(QWidget):
 
     def __init__(self, path: str | None = None):
+        
         super().__init__()
 
         self.setMaximumWidth(1000)
@@ -13,6 +14,8 @@ class PathBar(QWidget):
         # Main layout
         path_layout = QHBoxLayout()
         self.setLayout(path_layout)
+
+        save_label = QLabel("Saving path:")
 
         self.save_entry = QLineEdit()
         self.save_entry.setPlaceholderText("Path to save data")
@@ -22,11 +25,13 @@ class PathBar(QWidget):
         browse_button = QPushButton("Browse")
         browse_button.clicked.connect(self.select_save_path)
 
+        path_layout.addWidget(save_label)
         path_layout.addWidget(self.save_entry)
         path_layout.addWidget(browse_button)
 
-        path_layout.setStretch(0, 1)  # QLineEdit grows
-        path_layout.setStretch(1, 0)  # Button stays compact
+        path_layout.setStretch(0, 0)
+        path_layout.setStretch(1, 1)  # QLineEdit grows
+        path_layout.setStretch(2, 0)  # Button stays compact
 
         if path is not None:
              self.set_path(path)
