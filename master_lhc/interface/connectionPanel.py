@@ -9,19 +9,14 @@ class ConnectionPanel(QWidget):
     
     def __init__(self):
         
-        super().__init__()
+        super().__init__() # heritage from QWidget
 
-        # Internal list
+        # Internal list of server
         self.server_list_data = []
 
         # Main layout
         layout = QVBoxLayout()
         self.setLayout(layout)
-
-        # Entry
-        self.server_entry = QLineEdit()
-        self.server_entry.setPlaceholderText("Add address")
-        layout.addWidget(self.server_entry)
 
         # List
         self.server_list_widget = QListWidget()
@@ -32,24 +27,19 @@ class ConnectionPanel(QWidget):
         self.disconnect_button.clicked.connect(self.on_disconnect)
         layout.addWidget(self.disconnect_button)
 
-        # Connections
-        self.server_entry.returnPressed.connect(self.add_server)
 
-    def add_server(self, address_arg=None):
-        address = address_arg or self.server_entry.text()
+    def add_server(self, address=None):
+
         if not address:
             return
 
         item = QListWidgetItem(self.server_list_widget)
 
-        widget = ServerItemWidget(address)
+        widget = ServerItemWidget(address=address, name="Default")
 
         item.setSizeHint(widget.sizeHint())
         self.server_list_widget.addItem(item)
         self.server_list_widget.setItemWidget(item, widget)
-
-        self.server_entry.clear()
-
 
 
     def on_disconnect(self):
