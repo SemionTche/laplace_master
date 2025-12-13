@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
     QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtGui import QIcon
 
 import sys
@@ -18,6 +18,8 @@ class MasterWindow(QMainWindow):
     def __init__(self):
         
         super().__init__()
+
+        self.settings = QSettings("interface.ini")
 
         # Set window title
         self.setWindowTitle("Master Window")
@@ -37,9 +39,19 @@ class MasterWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        # Entry
-        path_bar = PathBar()
-        main_layout.addWidget(path_bar)
+        # path
+        self.path_bar = PathBar()
+
+        path_container = QHBoxLayout()
+        path_container.addStretch()             # add space
+        path_container.addWidget(self.path_bar)
+        path_container.addStretch()
+
+        main_layout.addLayout(path_container)
+
+        # last_path = self.settings.value("paths/save_path", "", type=str)
+        # if last_path:
+        #     self.path_bar.set_path(last_path)
 
         # 2 x 2 grid
         grid_layout = QGridLayout()
@@ -88,6 +100,10 @@ class MasterWindow(QMainWindow):
         grid_layout.setRowStretch(1, 1)
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 1)
+
+    @property
+    def path_to_save(self):
+        return self.path_bar.path_to_save
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
