@@ -4,51 +4,70 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 class PathBar(QWidget):
-
+    '''
+    Class made to define a QWidget used to group every elements of the saving path.
+    '''
     def __init__(self, path: str | None = None):
+        '''
+        Initialization of the PathBar class.
         
-        super().__init__()
+            Arg:
+                path: (str, optional)
+                    the path that should be set in the Entry.
+        '''
+        
+        super().__init__() # heritage from QWidget
 
-        self.setMaximumWidth(1000)
-
-        # Main layout
+        # main layout
         path_layout = QHBoxLayout()
         self.setLayout(path_layout)
 
+        # label
         save_label = QLabel("Saving path:")
 
+        # entry
         self.save_entry = QLineEdit()
         self.save_entry.setPlaceholderText("Path to save data")
         self.save_entry.setMaximumWidth(800)
         self.save_entry.setFocusPolicy(Qt.FocusPolicy.ClickFocus) # focus only if the item is clicked
 
+        # button
         browse_button = QPushButton("Browse")
         browse_button.clicked.connect(self.select_save_path)
 
+        # add the items to the layout
         path_layout.addWidget(save_label)
         path_layout.addWidget(self.save_entry)
         path_layout.addWidget(browse_button)
 
-        path_layout.setStretch(0, 0)
+        path_layout.setStretch(0, 0)  # Label stays compact
         path_layout.setStretch(1, 1)  # QLineEdit grows
         path_layout.setStretch(2, 0)  # Button stays compact
 
-        if path is not None:
-             self.set_path(path)
+        if path is not None:        # if there is an initial path
+             self.set_path(path)    # set the entry
     
     @property
-    def path_to_save(self):
+    def path_to_save(self) -> str:
+        '''
+        Convenient function to acces to the path 
+        where the data should be saved.
+        '''
         return self.save_entry.text()
     
-    def set_path(self, path: str):
+    def set_path(self, path: str) -> None:
+        '''
+        Set the saving entry with the given path.
+        '''
         self.save_entry.setText(path)
 
-    def select_save_path(self):
-            # Open directory selection dialog
-            directory = QFileDialog.getExistingDirectory(
-                self,
-                "Select directory to save data"
-            )
-            if directory:
-                self.save_entry.setText(directory)
-                print(self.path_to_save)
+    def select_save_path(self) -> None:
+        '''
+        Select the path from the directory window.
+        '''
+        # Open directory selection dialog
+        directory = QFileDialog.getExistingDirectory(self, 
+                                                     "Select directory to save data")
+        
+        if directory: # if a folder has been choosen
+            self.save_entry.setText(directory)

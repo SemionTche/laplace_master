@@ -11,6 +11,7 @@ class ServerItemWidget(QWidget):
     '''
     Class made to define the line content in 'ConnectionPanel'.
     Display the element related to the server as a 'QWidget'.
+    
     A flag 'self.connected' indicates if the communication should
     be made with the server.
     '''
