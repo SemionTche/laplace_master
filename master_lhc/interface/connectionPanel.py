@@ -28,10 +28,7 @@ class ConnectionPanel(QWidget):
         layout.addWidget(self.disconnect_button)
 
 
-    def add_server(self, address=None):
-
-        if not address:
-            return
+    def add_server(self, address: str):
 
         item = QListWidgetItem(self.server_list_widget)
 

@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 class PathBar(QWidget):
     '''
     Class made to define a QWidget used to group every elements of the saving path.
+    The Entry contain the path where the data will be stored.
     '''
     def __init__(self, path: str | None = None):
         '''
