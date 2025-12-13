@@ -43,7 +43,7 @@ class ConnectionPanel(QWidget):
         # Connections
         self.server_entry.returnPressed.connect(self.add_server)
 
-    def add_server(self):
+    def add_server(self, address_arg=None):
         address = self.server_entry.text()
         if address:
             self.server_list_data.append(address)
@@ -52,6 +52,12 @@ class ConnectionPanel(QWidget):
             item.setCheckState(Qt.CheckState.Unchecked)
             self.server_list_widget.addItem(item)
             self.server_entry.clear()
+        elif address_arg:
+            self.server_list_data.append(address_arg)
+            item = QListWidgetItem(self.connected_icon, address_arg)
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            self.server_list_widget.addItem(item)
 
     def on_disconnect(self):
         for index in range(self.server_list_widget.count()):
