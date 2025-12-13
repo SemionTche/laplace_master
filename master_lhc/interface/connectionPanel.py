@@ -1,4 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLineEdit, QPushButton, QListWidget, QListWidgetItem
+)
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
@@ -6,11 +8,13 @@ import os
 import pathlib
 
 class ConnectionPanel(QWidget):
+    
     def __init__(self):
+        
         super().__init__()
         p = pathlib.Path(__file__)
         sepa = os.sep
-        self.icon = str(p.parent) + sepa+'icons' + sepa
+        self.icon = str(p.parent) + sepa + 'icons' + sepa
 
         self.connected_icon = QIcon(self.icon+'connected.png')
         self.disconnected_icon = QIcon(self.icon+'disconnected.png')

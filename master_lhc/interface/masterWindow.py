@@ -1,5 +1,7 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
-from PyQt6.QtWidgets import QLineEdit, QPushButton, QVBoxLayout, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
+    QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog
+)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 
@@ -9,9 +11,12 @@ import qdarkstyle
 import pathlib
 
 from .connectionPanel import ConnectionPanel
+from .pathBar import PathBar
 
 class MasterWindow(QMainWindow):
+    
     def __init__(self):
+        
         super().__init__()
 
         # Set window title
@@ -22,18 +27,23 @@ class MasterWindow(QMainWindow):
 
         self.setWindowIcon(QIcon(self.icon+'LOA.png'))
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
-        self.setGeometry(100, 30, 1200, 800)
-
-        # Server list for diags panel
-        self.server_list_data = []
+        self.setGeometry(100, 30, 1000, 700)
 
         # Create central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        # Create grid layout to divide window into four areas
-        layout = QGridLayout()
-        central_widget.setLayout(layout)
+        # Main vertical layout
+        main_layout = QVBoxLayout()
+        central_widget.setLayout(main_layout)
+
+        # Entry
+        path_bar = PathBar()
+        main_layout.addWidget(path_bar)
+
+        # 2 x 2 grid
+        grid_layout = QGridLayout()
+        main_layout.addLayout(grid_layout)
 
         # Top-left label
         laser_label = QLabel("laser")
@@ -68,17 +78,16 @@ class MasterWindow(QMainWindow):
         bo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Add widgets to the grid layout
-        layout.addWidget(laser_label, 0, 0)
-        layout.addWidget(diags_widget, 0, 1)
-        layout.addWidget(motors_widget, 1, 0)
-        layout.addWidget(bo_label, 1, 1)
+        grid_layout.addWidget(laser_label, 0, 0)
+        grid_layout.addWidget(diags_widget, 0, 1)
+        grid_layout.addWidget(motors_widget, 1, 0)
+        grid_layout.addWidget(bo_label, 1, 1)
 
         # Set column and row stretch
-        layout.setRowStretch(0, 1)
-        layout.setRowStretch(1, 1)
-        layout.setColumnStretch(0, 1)
-        layout.setColumnStretch(1, 1)
-
+        grid_layout.setRowStretch(0, 1)
+        grid_layout.setRowStretch(1, 1)
+        grid_layout.setColumnStretch(0, 1)
+        grid_layout.setColumnStretch(1, 1)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
