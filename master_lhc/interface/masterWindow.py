@@ -116,7 +116,7 @@ class MasterWindow(QMainWindow):
         self.server_bar.server_added.connect(self.route_server)
 
     def route_server(self, address: str):
-        # Later this can route to motors or diags
+        # Later this will route to motors or diags
         self.diagsConnectionPanel.add_server(address)
 
     @property
