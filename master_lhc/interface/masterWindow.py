@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
     QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog
 )
-from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtCore import Qt, QSettings, QTimer
 from PyQt6.QtGui import QIcon
 
 import sys
@@ -13,6 +13,7 @@ import pathlib
 from .connectionPanel import ConnectionPanel
 from .pathBar import PathBar
 from .serverBar import ServerBar
+from client.clientManager import ClientManager
 
 class MasterWindow(QMainWindow):
     
@@ -106,6 +107,10 @@ class MasterWindow(QMainWindow):
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 1)
 
+        self.client_manager = ClientManager()
+        self.timer = QTimer()
+        self.timer.start(3000)
+
         self.actions()
 
     def actions(self):
@@ -114,6 +119,10 @@ class MasterWindow(QMainWindow):
             lambda text: self.settings.setValue("pathSavingEntry", text)
         )
         self.server_bar.server_added.connect(self.route_server)
+        self.client_manager.server_contacted.connect(
+            self.diagsConnectionPanel.update_last_check
+        )
+        self.timer.timeout.connect(self.client_manager.ping_all)
 
     def route_server(self, address: str):
         # Later this will route to motors or diags
@@ -122,6 +131,11 @@ class MasterWindow(QMainWindow):
     @property
     def path_to_save(self):
         return self.path_bar.path_to_save
+
+    def closeEvent(self, event):
+        self.client_manager.close_all()
+        event.accept()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
