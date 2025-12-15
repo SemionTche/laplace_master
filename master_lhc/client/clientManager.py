@@ -62,6 +62,7 @@ class ClientManager(QObject):
         self.clients.clear()
     
     def set_server_enabled(self, address: str, enabled: bool):
+        print(f"[ClientManager] set_server_enabled({address}, {enabled})")
         client = self.clients.get(address)
         if client:
             client.set_connected(enabled)

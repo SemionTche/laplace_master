@@ -75,8 +75,8 @@ class ConnectionPanel(QWidget):
                 self.server_list_widget.item(i)
             )
             address = widget.address
-            if widget.is_selected() != widget.connected:
-                self.server_connection_changed.emit(address, widget.is_selected()) # emit signal or call handler
+            if widget.is_selected():
+                widget.toggle_connection_state()
             widget.enable_selection(False)
 
         self.restore_disconnect_button()

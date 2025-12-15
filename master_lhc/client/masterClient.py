@@ -9,7 +9,7 @@ class MasterClient:
     '''
     Class made in order to contact a server.
     '''
-    server_contacted = pyqtSignal(str)  # emits server address when a message is sent
+    # server_contacted = pyqtSignal(str)  # emits server address when a message is sent
 
     def __init__(self, address: str, timeout_ms: int = 2000):
         self.address = address

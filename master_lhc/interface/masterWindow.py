@@ -120,12 +120,15 @@ class MasterWindow(QMainWindow):
             lambda text: self.settings.setValue("pathSavingEntry", text)
         )
         self.server_bar.server_added.connect(self.route_server)
+        
         self.client_manager.server_contacted.connect(
             self.diagsConnectionPanel.update_last_check
         )
+        
         self.client_manager.server_identified.connect(
             self.diagsConnectionPanel.update_server_name
         )
+        
         self.timer.timeout.connect(self.client_manager.ping_all)
 
         self.diagsConnectionPanel.server_connection_changed.connect(
@@ -138,7 +141,7 @@ class MasterWindow(QMainWindow):
         self.client_manager.server_contacted.connect(
             self.diagsConnectionPanel.update_last_check
         )
-        
+
         self.client_manager.server_contacted.connect(
             self.motorsConnectionPanel.update_last_check
         )

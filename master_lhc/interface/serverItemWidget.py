@@ -119,6 +119,7 @@ class ServerItemWidget(QWidget):
         self.update_last_check() # update the last check time
 
         # Emit the signal
+        print(f"[ServerItemWidget] emit {self.address} {self.connected}")
         self.connection_changed.emit(self.address, self.connected)
 
 
