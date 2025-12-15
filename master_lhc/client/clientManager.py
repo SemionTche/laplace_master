@@ -3,18 +3,46 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from .masterClient import MasterClient
 
 
+from dataclasses import dataclass
+
+@dataclass
+class ServerInfo:
+    address: str
+    alive: bool
+    name: str | None
+    device: str | None
+
+
 class ClientManager(QObject):
     
     server_pinged = pyqtSignal(str, bool)  # address, alive
     server_contacted = pyqtSignal(str)     # address
+    server_identified = pyqtSignal(str, str)  # address, name
 
     def __init__(self):
         super().__init__()
         self.clients: dict[str, MasterClient] = {}
 
-    def add_server(self, address: str):
-        if address not in self.clients:
-            self.clients[address] = MasterClient(address)
+    def probe_server(self, address: str) -> ServerInfo | None:
+        try:
+            client = MasterClient(address)
+        except ValueError:
+            return None
+        
+        client = MasterClient(address)
+        self.clients[address] = client
+
+        alive = client.ping()
+        name = None
+        device = None
+
+        if alive:
+            name = client.send_message("__NAME__")
+            device = client.send_message("__DEVICE__")
+        else:
+            client.close()
+
+        return ServerInfo(address=address, alive=alive, name=name, device=device)
 
     def remove_server(self, address: str):
         client = self.clients.pop(address, None)

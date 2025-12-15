@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
-    QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog
+    QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox
 )
 from PyQt6.QtCore import Qt, QSettings, QTimer
 from PyQt6.QtGui import QIcon
@@ -19,7 +19,7 @@ class MasterWindow(QMainWindow):
     
     def __init__(self):
         
-        super().__init__()
+        super().__init__() # heritage from QMainWindow
 
         # Set window title
         self.setWindowTitle("Master Window")
@@ -88,8 +88,8 @@ class MasterWindow(QMainWindow):
         motors_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         motors_layout.addWidget(motors_label)
 
-        motorsConnectionPanel = ConnectionPanel()
-        motors_layout.addWidget(motorsConnectionPanel)
+        self.motorsConnectionPanel = ConnectionPanel()
+        motors_layout.addWidget(self.motorsConnectionPanel)
 
         # Bottom-right label
         bo_label = QLabel("BO")
@@ -107,6 +107,7 @@ class MasterWindow(QMainWindow):
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 1)
 
+        # client
         self.client_manager = ClientManager()
         self.timer = QTimer()
         self.timer.start(3000)
@@ -122,11 +123,36 @@ class MasterWindow(QMainWindow):
         self.client_manager.server_contacted.connect(
             self.diagsConnectionPanel.update_last_check
         )
+        self.client_manager.server_identified.connect(
+            self.diagsConnectionPanel.update_server_name
+        )
         self.timer.timeout.connect(self.client_manager.ping_all)
 
     def route_server(self, address: str):
-        # Later this will route to motors or diags
-        self.diagsConnectionPanel.add_server(address)
+        info = self.client_manager.probe_server(address)
+        
+        if info is None:
+            QMessageBox.warning(self, "Invalid address",
+            f'The address "{address}" was not found or is invalid.',
+            QMessageBox.StandardButton.Ok)
+            return
+
+        if not info.alive:
+            QMessageBox.warning(self, "Server unreachable",
+            f'The server "{address}" did not respond.',
+            QMessageBox.StandardButton.Ok)
+            return
+
+        if info.device == "diagnostics":
+            self.diagsConnectionPanel.add_server(
+                address=info.address,
+                name=info.name or "Unknown"
+            )
+        elif info.device == "motors":
+            self.motorsConnectionPanel.add_server(
+                address=info.address,
+                name=info.name or "Unkwon"
+            )
 
     @property
     def path_to_save(self):

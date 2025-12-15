@@ -30,11 +30,10 @@ class ConnectionPanel(QWidget):
         layout.addWidget(self.disconnect_button)
 
 
-    def add_server(self, address: str):
-
+    def add_server(self, address: str, name: str = "Unknown"):
         item = QListWidgetItem(self.server_list_widget)
 
-        widget = ServerItemWidget(address=address, name="Default")
+        widget = ServerItemWidget(address=address, name=name)
 
         item.setSizeHint(widget.sizeHint())
         self.server_list_widget.addItem(item)
@@ -52,7 +51,10 @@ class ConnectionPanel(QWidget):
 
         self._replace_buttons()
 
-
+    def update_server_name(self, address: str, name: str):
+        widget = self.server_widgets.get(address)
+        if widget:
+            widget.set_name(name)
 
     def cancel_selection(self):
         for i in range(self.server_list_widget.count()):
