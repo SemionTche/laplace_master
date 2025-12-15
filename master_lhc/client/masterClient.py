@@ -3,8 +3,14 @@ import zmq
 import threading
 import time
 
+from PyQt6.QtCore import pyqtSignal
 
 class MasterClient:
+    '''
+    Class made in order to contact a server.
+    '''
+    server_contacted = pyqtSignal(str)  # emits server address when a message is sent
+
     def __init__(self, address: str, timeout_ms: int = 2000):
         self.address = address
         self.context = zmq.Context.instance()
@@ -51,6 +57,10 @@ class MasterClient:
             self.socket.send_string(message)
             reply = self.socket.recv_string()
             self.last_contact_time = time.time()
+            
+            # emit signal through client manager (optional, see note below)
+            # self.client_manager.server_contacted.emit(self.address)
+
             return reply
         except (zmq.error.Again, zmq.ZMQError):
             try:

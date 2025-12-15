@@ -76,8 +76,7 @@ class ConnectionPanel(QWidget):
             )
             address = widget.address
             if widget.is_selected() != widget.connected:
-                # emit signal or call handler
-                self.server_connection_changed.emit(address, widget.is_selected())
+                self.server_connection_changed.emit(address, widget.is_selected()) # emit signal or call handler
             widget.enable_selection(False)
 
         self.restore_disconnect_button()
@@ -120,7 +119,6 @@ class ConnectionPanel(QWidget):
 
 
     def on_server_connection_changed(self, address: str, connected: bool):
-        # This will be connected later in MasterWindow
         print(f"Server {address} connection changed: {connected}")
         self.server_connection_changed.emit(address, connected)
         pass

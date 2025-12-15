@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
-    QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox
+    QVBoxLayout, QHBoxLayout, QMessageBox
 )
 from PyQt6.QtCore import Qt, QSettings, QTimer
 from PyQt6.QtGui import QIcon
@@ -135,11 +135,13 @@ class MasterWindow(QMainWindow):
             lambda addr, state: self.client_manager.set_server_enabled(addr, state)
         )
 
-    # def on_server_connection_changed(self, address: str, connected: bool):
-    #     print("replace the useless function")
-    #     client = self.client_manager.clients.get(address)
-    #     if client:
-    #         client.set_enabled(connected)
+        self.client_manager.server_contacted.connect(
+            self.diagsConnectionPanel.update_last_check
+        )
+        
+        self.client_manager.server_contacted.connect(
+            self.motorsConnectionPanel.update_last_check
+        )
 
     def route_server(self, address: str):
         info = self.client_manager.probe_server(address)
@@ -161,13 +163,11 @@ class MasterWindow(QMainWindow):
                 address=info.address,
                 name=info.name or "Unknown"
             )
-            # self.diagsConnectionPanel.on_server_connection_changed = self.on_server_connection_changed
         elif info.device == "motors":
             self.motorsConnectionPanel.add_server(
                 address=info.address,
                 name=info.name or "Unkwon"
             )
-            # self.motorsConnectionPanel.on_server_connection_changed = self.on_server_connection_changed
 
     @property
     def path_to_save(self):
