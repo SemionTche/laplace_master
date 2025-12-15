@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from .serverItemWidget import ServerItemWidget
 
 class ConnectionPanel(QWidget):
-    
+    server_connection_changed = pyqtSignal(str, bool)
     def __init__(self):
         
         super().__init__() # heritage from QWidget
@@ -34,6 +34,7 @@ class ConnectionPanel(QWidget):
         item = QListWidgetItem(self.server_list_widget)
 
         widget = ServerItemWidget(address=address, name=name)
+        widget.connection_changed.connect(self.on_server_connection_changed)
 
         item.setSizeHint(widget.sizeHint())
         self.server_list_widget.addItem(item)
@@ -56,6 +57,7 @@ class ConnectionPanel(QWidget):
         if widget:
             widget.set_name(name)
 
+
     def cancel_selection(self):
         for i in range(self.server_list_widget.count()):
             widget = self.server_list_widget.itemWidget(
@@ -72,9 +74,10 @@ class ConnectionPanel(QWidget):
             widget = self.server_list_widget.itemWidget(
                 self.server_list_widget.item(i)
             )
-            if widget.is_selected():
-                widget.toggle_connection_state()
-
+            address = widget.address
+            if widget.is_selected() != widget.connected:
+                # emit signal or call handler
+                self.server_connection_changed.emit(address, widget.is_selected())
             widget.enable_selection(False)
 
         self.restore_disconnect_button()
@@ -115,3 +118,9 @@ class ConnectionPanel(QWidget):
         if widget:
             widget.update_last_check()
 
+
+    def on_server_connection_changed(self, address: str, connected: bool):
+        # This will be connected later in MasterWindow
+        print(f"Server {address} connection changed: {connected}")
+        self.server_connection_changed.emit(address, connected)
+        pass

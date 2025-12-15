@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QLabel, QCheckBox
 )
-from PyQt6.QtCore import Qt, QDateTime
+from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon
 
 import pathlib
@@ -15,6 +15,7 @@ class ServerItemWidget(QWidget):
     A flag 'self.connected' indicates if the communication should
     be made with the server.
     '''
+    connection_changed = pyqtSignal(str, bool)  # address, connected
     def __init__(self, 
                  address: str,
                  name: str = "Unkown"):
@@ -116,6 +117,9 @@ class ServerItemWidget(QWidget):
         self.state_icon.setPixmap(icon.pixmap(16, 16))
         
         self.update_last_check() # update the last check time
+
+        # Emit the signal
+        self.connection_changed.emit(self.address, self.connected)
 
 
     def update_last_check(self) -> None:

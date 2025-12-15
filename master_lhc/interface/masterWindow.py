@@ -128,6 +128,19 @@ class MasterWindow(QMainWindow):
         )
         self.timer.timeout.connect(self.client_manager.ping_all)
 
+        self.diagsConnectionPanel.server_connection_changed.connect(
+            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        )
+        self.motorsConnectionPanel.server_connection_changed.connect(
+            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        )
+
+    # def on_server_connection_changed(self, address: str, connected: bool):
+    #     print("replace the useless function")
+    #     client = self.client_manager.clients.get(address)
+    #     if client:
+    #         client.set_enabled(connected)
+
     def route_server(self, address: str):
         info = self.client_manager.probe_server(address)
         
@@ -148,11 +161,13 @@ class MasterWindow(QMainWindow):
                 address=info.address,
                 name=info.name or "Unknown"
             )
+            # self.diagsConnectionPanel.on_server_connection_changed = self.on_server_connection_changed
         elif info.device == "motors":
             self.motorsConnectionPanel.add_server(
                 address=info.address,
                 name=info.name or "Unkwon"
             )
+            # self.motorsConnectionPanel.on_server_connection_changed = self.on_server_connection_changed
 
     @property
     def path_to_save(self):
