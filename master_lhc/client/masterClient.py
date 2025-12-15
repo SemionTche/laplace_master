@@ -22,15 +22,15 @@ class MasterClient:
 
     def send_message(self, message: str) -> str | None:
         try:
-
             self.socket.send_string(message)
             reply = self.socket.recv_string()
             self.last_contact_time = time.time()
-            
             return reply
-        
-        except zmq.error.Again:
-            self._reset_socket() # Timeout → socket is now invalid
+        except (zmq.error.Again, zmq.ZMQError):
+            try:
+                self.socket.close(linger=0) # On timeout or invalid socket, just return None
+            except Exception:
+                pass
             return None
 
     def ping(self) -> bool:
@@ -39,14 +39,3 @@ class MasterClient:
 
     def close(self):
         self.socket.close(linger=0)
-    
-    def _reset_socket(self):
-        try:
-            self.socket.close(linger=0)
-        except Exception:
-            pass
-
-        self.socket = self.context.socket(zmq.REQ)
-        self.socket.setsockopt(zmq.RCVTIMEO, 2000)
-        self.socket.setsockopt(zmq.SNDTIMEO, 2000)
-        self.socket.connect(self.address)

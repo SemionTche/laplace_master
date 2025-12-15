@@ -28,21 +28,19 @@ class ClientManager(QObject):
             client = MasterClient(address)
         except ValueError:
             return None
-        
-        client = MasterClient(address)
+
         self.clients[address] = client
 
         alive = client.ping()
-        name = None
-        device = None
-
-        if alive:
-            name = client.send_message("__NAME__")
-            device = client.send_message("__DEVICE__")
-        else:
+        if not alive:
             client.close()
+            return ServerInfo(address=address, alive=False, name=None, device=None)
 
-        return ServerInfo(address=address, alive=alive, name=name, device=device)
+        # Only request name/device if alive
+        name = client.send_message("__NAME__")
+        device = client.send_message("__DEVICE__")
+
+        return ServerInfo(address=address, alive=True, name=name, device=device)
 
     def remove_server(self, address: str):
         client = self.clients.pop(address, None)
