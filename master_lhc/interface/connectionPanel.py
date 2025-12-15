@@ -11,6 +11,8 @@ class ConnectionPanel(QWidget):
         
         super().__init__() # heritage from QWidget
 
+        self.server_widgets: dict[str, ServerItemWidget] = {}
+
         # Internal list of server
         self.server_list_data = []
 
@@ -28,15 +30,16 @@ class ConnectionPanel(QWidget):
         layout.addWidget(self.disconnect_button)
 
 
-    def add_server(self, address: str):
-
+    def add_server(self, address: str, name: str = "Unknown"):
         item = QListWidgetItem(self.server_list_widget)
 
-        widget = ServerItemWidget(address=address, name="Default")
+        widget = ServerItemWidget(address=address, name=name)
 
         item.setSizeHint(widget.sizeHint())
         self.server_list_widget.addItem(item)
         self.server_list_widget.setItemWidget(item, widget)
+
+        self.server_widgets[address] = widget
 
 
     def on_disconnect(self):
@@ -48,7 +51,10 @@ class ConnectionPanel(QWidget):
 
         self._replace_buttons()
 
-
+    def update_server_name(self, address: str, name: str):
+        widget = self.server_widgets.get(address)
+        if widget:
+            widget.set_name(name)
 
     def cancel_selection(self):
         for i in range(self.server_list_widget.count()):
@@ -103,4 +109,9 @@ class ConnectionPanel(QWidget):
 
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.confirm_button)
+
+    def update_last_check(self, address: str):
+        widget = self.server_widgets.get(address)
+        if widget:
+            widget.update_last_check()
 

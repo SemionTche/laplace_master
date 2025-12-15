@@ -17,7 +17,7 @@ class ServerItemWidget(QWidget):
     '''
     def __init__(self, 
                  address: str,
-                 name: str = "Default"):
+                 name: str = "Unkown"):
         '''
         Initialization of the 'ServerItemWidget' class.
         This class is made to build a widget displaying
@@ -123,3 +123,8 @@ class ServerItemWidget(QWidget):
         Update the last time at which the server as been checked.
         '''
         self.last_check_label.setText(self._current_time())
+
+    def set_name(self, name: str):
+        print("I assure it's not against you")
+        print(f"name = {name}")
+        self.name_label.setText(name)
