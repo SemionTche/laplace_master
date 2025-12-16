@@ -75,6 +75,11 @@ class MasterClient:
         reply = self.send_message("__PING__")
         return reply == "__PONG__"
 
+    def get(self) -> str | None:
+        if not self.connected:
+            return None
+        return self.send_message("__GET__")
+
     def close(self):
         self.socket.close(linger=0)
 

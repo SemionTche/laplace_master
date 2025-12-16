@@ -54,12 +54,20 @@ class ClientManager(QObject):
 
     def ping_all(self):
         for address, client in self.clients.items():
+            
+            if not client.connected:
+                continue
+
             alive = client.ping()
             self.server_pinged.emit(address, alive)
 
-            # if client.connected and alive:
-            if alive:
-                self.server_contacted.emit(address)
+            if not alive:
+                continue
+            
+            self.server_contacted.emit(address)
+            data = client.get()
+            if data is not None:
+                print(f"[GET] {address}: {data}")
 
 
     def close_all(self):
