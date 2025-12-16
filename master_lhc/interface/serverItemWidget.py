@@ -119,6 +119,7 @@ class ServerItemWidget(QWidget):
         self.update_last_check() # update the last check time
 
         # Emit the signal
+        print(f"[ServerItemWidget] emit {self.address} {self.connected}")
         self.connection_changed.emit(self.address, self.connected)
 
 
@@ -129,6 +130,4 @@ class ServerItemWidget(QWidget):
         self.last_check_label.setText(self._current_time())
 
     def set_name(self, name: str):
-        print("I assure it's not against you")
-        print(f"name = {name}")
         self.name_label.setText(name)

@@ -52,6 +52,10 @@ class ClientManager(QObject):
             alive = client.ping()
             self.server_pinged.emit(address, alive)
 
+            # if client.connected and alive:
+            if alive:
+                self.server_contacted.emit(address)
+
 
     def close_all(self):
         for client in self.clients.values():
@@ -59,6 +63,7 @@ class ClientManager(QObject):
         self.clients.clear()
     
     def set_server_enabled(self, address: str, enabled: bool):
+        print(f"[ClientManager] set_server_enabled({address}, {enabled})")
         client = self.clients.get(address)
         if client:
             client.set_connected(enabled)
