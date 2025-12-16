@@ -168,12 +168,12 @@ class MasterWindow(QMainWindow):
             QMessageBox.StandardButton.Ok)
             return
 
-        if info.device == "diagnostics":
+        if info.device == "__CAMERA__":
             self.diagsConnectionPanel.add_server(
                 address=info.address,
                 name=info.name or "Unknown"
             )
-        elif info.device == "motors":
+        elif info.device == "__MOTORS__" or info.device == "__GAS__":
             self.motorsConnectionPanel.add_server(
                 address=info.address,
                 name=info.name or "Unkwon"
