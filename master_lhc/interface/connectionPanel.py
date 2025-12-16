@@ -122,3 +122,11 @@ class ConnectionPanel(QWidget):
         print(f"Server {address} connection changed: {connected}")
         self.server_connection_changed.emit(address, connected)
         pass
+
+    def on_server_alive_changed(self, address: str, alive: bool):
+        widget = self.server_widgets.get(address)
+        if not widget:
+            return
+
+        if not alive and widget.connected:
+            widget.toggle_connection_state()

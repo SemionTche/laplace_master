@@ -52,7 +52,8 @@ class ClientManager(QObject):
             alive = client.ping()
             self.server_pinged.emit(address, alive)
 
-            if client.connected and alive:
+            # if client.connected and alive:
+            if alive:
                 self.server_contacted.emit(address)
 
 
