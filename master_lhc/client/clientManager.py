@@ -11,6 +11,7 @@ class ServerInfo:
     alive: bool
     name: str | None
     device: str | None
+    freedom : int
 
 
 class ClientManager(QObject):
@@ -34,13 +35,17 @@ class ClientManager(QObject):
         alive = client.ping()
         if not alive:
             client.close()
-            return ServerInfo(address=address, alive=False, name=None, device=None)
+            return ServerInfo(address=address, alive=False, name=None, device=None, serverControledLines=0)
 
         # Only request name/device if alive
         name = client.send_message("__NAME__")
         device = client.send_message("__DEVICE__")
-
-        return ServerInfo(address=address, alive=True, name=name, device=device)
+        freedom = client.send_message("__FREEDOM__")
+        try:
+            freedom = int(freedom)
+        except (TypeError, ValueError):
+            freedom = 0
+        return ServerInfo(address=address, alive=True, name=name, device=device, freedom=freedom)
 
     def remove_server(self, address: str):
         client = self.clients.pop(address, None)

@@ -5,6 +5,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 
 from .serverItemWidget import ServerItemWidget
 
+from .serverControlWidget import ServerControlWidget
+
 class ConnectionPanel(QWidget):
     server_connection_changed = pyqtSignal(str, bool)
     def __init__(self):
@@ -130,3 +132,12 @@ class ConnectionPanel(QWidget):
 
         if not alive and widget.connected:
             widget.toggle_connection_state()
+
+    def add_server_controls(self, address: str, count: int):
+        for i in range(count):
+            item = QListWidgetItem(self.server_list_widget)
+            widget = ServerControlWidget(address, i + 1)
+
+            item.setSizeHint(widget.sizeHint())
+            self.server_list_widget.addItem(item)
+            self.server_list_widget.setItemWidget(item, widget)

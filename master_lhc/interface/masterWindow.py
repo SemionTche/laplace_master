@@ -178,6 +178,11 @@ class MasterWindow(QMainWindow):
                 address=info.address,
                 name=info.name or "Unkwon"
             )
+            if info.freedom:
+                self.motorsConnectionPanel.add_server_controls(
+                    info.address,
+                    info.freedom
+                )
 
     @property
     def path_to_save(self):
