@@ -141,3 +141,15 @@ class ConnectionPanel(QWidget):
             item.setSizeHint(widget.sizeHint())
             self.server_list_widget.addItem(item)
             self.server_list_widget.setItemWidget(item, widget)
+
+    def update_server_data(self, address: str, data: dict):
+        for i in range(self.server_list_widget.count()):
+            widget = self.server_list_widget.itemWidget(
+                self.server_list_widget.item(i)
+            )
+        
+            if not isinstance(widget, ServerControlWidget):
+                continue
+
+            if widget.address == address:
+                widget.update_data(data)

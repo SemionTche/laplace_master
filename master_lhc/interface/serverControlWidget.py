@@ -42,6 +42,10 @@ class ServerControlWidget(QWidget):
         self.value = QLabel("—")
         layout.addWidget(self.value, stretch=1)
 
+        # unit
+        self.unit = QLabel("")
+        layout.addWidget(self.unit, stretch=1)
+
     # --- REQUIRED API ---
 
     def enable_selection(self, enabled: bool):
@@ -61,6 +65,6 @@ class ServerControlWidget(QWidget):
         # placeholder for later networking
         pass
 
-
-    def set_position(self, pos: float):
-        self.value.setText(f"{pos:.3f}")
+    def update_data(self, data: dict):
+        self.value.setText(f"{float(data["data"]):.3f}")
+        self.unit.setText(str(data["unit"]))

@@ -1,4 +1,5 @@
 import time
+import json
 from PyQt6.QtCore import QObject, pyqtSignal
 from .masterClient import MasterClient
 
@@ -19,6 +20,7 @@ class ClientManager(QObject):
     server_pinged = pyqtSignal(str, bool)  # address, alive
     server_contacted = pyqtSignal(str)     # address
     server_identified = pyqtSignal(str, str)  # address, name
+    server_data_received = pyqtSignal(str, dict)  # address, raw data
 
     def __init__(self):
         super().__init__()
@@ -35,7 +37,7 @@ class ClientManager(QObject):
         alive = client.ping()
         if not alive:
             client.close()
-            return ServerInfo(address=address, alive=False, name=None, device=None, serverControledLines=0)
+            return ServerInfo(address=address, alive=False, name=None, device=None, freedom=0)
 
         # Only request name/device if alive
         name = client.send_message("__NAME__")
@@ -68,6 +70,10 @@ class ClientManager(QObject):
             data = client.get()
             if data is not None:
                 print(f"[GET] {address}: {data}")
+                data = json.loads(data)
+                print(f"type = {type(data)}")
+                print(f"data = {data}")
+                self.server_data_received.emit(address, data)
 
 
     def close_all(self):

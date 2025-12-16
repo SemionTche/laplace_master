@@ -152,6 +152,9 @@ class MasterWindow(QMainWindow):
         self.client_manager.server_pinged.connect(
             self.motorsConnectionPanel.on_server_alive_changed
         )
+        self.client_manager.server_data_received.connect(
+            self.motorsConnectionPanel.update_server_data
+        )
 
     def route_server(self, address: str):
         info = self.client_manager.probe_server(address)
