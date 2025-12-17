@@ -1,3 +1,4 @@
+# libraries
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
     QVBoxLayout, QHBoxLayout, QMessageBox
@@ -10,9 +11,10 @@ import os
 import qdarkstyle
 import pathlib
 
-from .connectionPanel import ConnectionPanel
-from .pathBar import PathBar
-from .serverBar import ServerBar
+# project
+from interface.connectionPanel import ConnectionPanel
+from interface.pathBar import PathBar
+from interface.serverBar import ServerBar
 from client.clientManager import ClientManager
 
 class MasterWindow(QMainWindow):
@@ -21,17 +23,34 @@ class MasterWindow(QMainWindow):
         
         super().__init__() # heritage from QMainWindow
 
-        # Set window title
+        self.p = pathlib.Path(__file__)  # current path of the file
+        self.sepa = os.sep               # separator (depends on the os)
+                
+        self.settings = QSettings(str(self.p.parent / "interface.ini"), QSettings.Format.IniFormat)  # load the settings
+
+        self.set_up()  # set the widgets and place them in the window
+
+        # Client
+        self.client_manager = ClientManager()
+        
+        # Ping timer
+        self.timer = QTimer()
+        self.timer.start(3000)
+        
+        self.actions()  # signals
+
+    def set_up(self) -> None:
+        '''
+        PlaceHolder
+        '''
+        # Set window title, geometry and style
         self.setWindowTitle("Master Window")
-        p = pathlib.Path(__file__)
-        sepa = os.sep
-        self.icon = str(p.parent) + sepa + 'icons' + sepa
-
-        self.settings = QSettings(str(p.parent / "interface.ini"), QSettings.Format.IniFormat)
-
-        self.setWindowIcon(QIcon(self.icon+'LOA.png'))
-        self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         self.setGeometry(100, 30, 1000, 700)
+        self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
+        
+        # Window icon
+        icon = str(self.p.parent) + self.sepa + 'icons' + self.sepa    # icon path
+        self.setWindowIcon(QIcon(icon + 'LOA.png'))
 
         # Create central widget
         central_widget = QWidget()
@@ -41,10 +60,11 @@ class MasterWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        # top line
+        ### top line (pathBar and serverBar)
         top_container = QHBoxLayout()
+        main_layout.addLayout(top_container)
 
-        # path
+            # pathBar
         saved_path = self.settings.value("pathSavingEntry", defaultValue="", type=str)
         self.path_bar = PathBar(saved_path)
 
@@ -52,69 +72,45 @@ class MasterWindow(QMainWindow):
         top_container.addWidget(self.path_bar)
         top_container.addStretch()
 
-        # add server
+            # serverBar
         self.server_bar = ServerBar()
         top_container.addWidget(self.server_bar)
         top_container.addStretch()
 
-        main_layout.addLayout(top_container)
-
-        # 2 x 2 grid
+        ### 2 x 2 grid
         grid_layout = QGridLayout()
         main_layout.addLayout(grid_layout)
 
-        # Top-left label
+            # Top-left label
         laser_label = QLabel("laser")
         laser_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Top-right layout for diags panel
-        diags_widget = QWidget()
-        diags_layout = QVBoxLayout()
-        diags_widget.setLayout(diags_layout)
+            # Top-right layout for diags panel
+        self.diagsConnectionPanel = ConnectionPanel("Diagnostics")
 
-        diags_label = QLabel("diags")
-        diags_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        diags_layout.addWidget(diags_label)
+            # Bottom-left label
+        self.motorsConnectionPanel = ConnectionPanel("Operating system")
 
-        self.diagsConnectionPanel = ConnectionPanel()
-        diags_layout.addWidget(self.diagsConnectionPanel)
-
-        # Bottom-left label
-        motors_widget = QWidget()
-        motors_layout = QVBoxLayout()
-        motors_widget.setLayout(motors_layout)
-
-        motors_label = QLabel("motors")
-        motors_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        motors_layout.addWidget(motors_label)
-
-        self.motorsConnectionPanel = ConnectionPanel()
-        motors_layout.addWidget(self.motorsConnectionPanel)
-
-        # Bottom-right label
+            # Bottom-right label
         bo_label = QLabel("BO")
         bo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Add widgets to the grid layout
+            # Add widgets to the grid layout
         grid_layout.addWidget(laser_label, 0, 0)
-        grid_layout.addWidget(diags_widget, 0, 1)
-        grid_layout.addWidget(motors_widget, 1, 0)
+        grid_layout.addWidget(self.diagsConnectionPanel, 0, 1)
+        grid_layout.addWidget(self.motorsConnectionPanel, 1, 0)
         grid_layout.addWidget(bo_label, 1, 1)
 
-        # Set column and row stretch
+            # Set column and row stretch
         grid_layout.setRowStretch(0, 1)
         grid_layout.setRowStretch(1, 1)
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 1)
 
-        # client
-        self.client_manager = ClientManager()
-        self.timer = QTimer()
-        self.timer.start(3000)
-
-        self.actions()
-
-    def actions(self):
+    def actions(self) -> None:
+        '''
+        PlaceHolder
+        '''
         # update the 'interface.ini' file
         self.path_bar.save_entry.textChanged.connect(
             lambda text: self.settings.setValue("pathSavingEntry", text)
@@ -194,10 +190,3 @@ class MasterWindow(QMainWindow):
     def closeEvent(self, event):
         self.client_manager.close_all()
         event.accept()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MasterWindow()
-    window.show()
-    sys.exit(app.exec())

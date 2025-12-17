@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem
+    QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem,
+    QLabel
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -9,11 +10,14 @@ from .serverControlWidget import ServerControlWidget
 
 class ConnectionPanel(QWidget):
     server_connection_changed = pyqtSignal(str, bool)
-    def __init__(self):
+    
+    def __init__(self, title: str = ""):
         
         super().__init__() # heritage from QWidget
 
         self.server_widgets: dict[str, ServerItemWidget] = {}
+
+        self.title = title
 
         # Internal list of server
         self.server_list_data = []
@@ -21,6 +25,10 @@ class ConnectionPanel(QWidget):
         # Main layout
         layout = QVBoxLayout()
         self.setLayout(layout)
+
+        title_label = QLabel(self.title)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
 
         # List
         self.server_list_widget = QListWidget()

@@ -4,6 +4,6 @@ import sys
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MasterWindow()
-    window.show()
-    sys.exit(app.exec())
+    window = MasterWindow() # initialize the window
+    window.show()           # run the main loop
+    sys.exit(app.exec())    # if the app terminated, end the process
