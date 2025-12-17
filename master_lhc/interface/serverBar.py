@@ -30,13 +30,13 @@ class ServerBar(QWidget):
         layout.addWidget(self.server_entry)
 
         # action
-        self.server_entry.returnPressed.connect(self._emit_server)
+        self.server_entry.returnPressed.connect(self._emit_new_server)
 
-    def _emit_server(self) -> None:
+    def _emit_new_server(self) -> None:
         '''
         Function made to emit a signal when a server address is added.
         '''
         text = self.server_entry.text().strip() # get the address
         if text:
-            self.server_added.emit(text) # emit it
-            self.server_entry.clear() # clear the Entry
+            self.server_added.emit(text)    # emit it
+            self.server_entry.clear()       # clear the Entry

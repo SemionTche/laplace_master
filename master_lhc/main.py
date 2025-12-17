@@ -1,3 +1,4 @@
+# libraries
 from interface.masterWindow import MasterWindow
 from PyQt6.QtWidgets import QApplication
 import sys

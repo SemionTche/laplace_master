@@ -45,7 +45,9 @@ class ServerItemWidget(QWidget):
         self.address = address
         self.name = name
         self.connected = True # flag that defines if the server should be 'connected' (to send messages)
-
+        
+        self.setMinimumHeight(26)
+        
         layout = QHBoxLayout()
         layout.setContentsMargins(4, 2, 4, 2) # aspect of the line
         layout.setSpacing(8)
@@ -112,22 +114,28 @@ class ServerItemWidget(QWidget):
         Function made to change the flag 'self.connected'.
         '''
         self.connected = not self.connected # change the flag
+        
         # change the icon
         icon = self.connected_icon if self.connected else self.disconnected_icon
         self.state_icon.setPixmap(icon.pixmap(16, 16))
         
-        self.update_last_check() # update the last check time
+        self.update_last_msg() # update the last message time
 
         # Emit the signal
         print(f"[ServerItemWidget] emit {self.address} {self.connected}")
         self.connection_changed.emit(self.address, self.connected)
 
 
-    def update_last_check(self) -> None:
+    def update_last_msg(self) -> None:
         '''
-        Update the last time at which the server as been checked.
+        Update the last time at which a message as been received 
+        from the server.
         '''
         self.last_check_label.setText(self._current_time())
 
+
     def set_name(self, name: str):
+        '''
+        Set the name of the server.
+        '''
         self.name_label.setText(name)

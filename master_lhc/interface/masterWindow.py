@@ -17,9 +17,15 @@ from interface.serverBar import ServerBar
 from client.clientManager import ClientManager
 
 class MasterWindow(QMainWindow):
-    
+    '''
+    Main class of the 'master_lhc' project.
+    Create the main window and connect the interface 
+    and the server configurations. 
+    '''
     def __init__(self):
-        
+        '''
+        Initialization of the 'MasterWindow' class.
+        '''
         super().__init__() # heritage from QMainWindow
 
         self.p = pathlib.Path(__file__)  # current path of the file
@@ -59,8 +65,8 @@ class MasterWindow(QMainWindow):
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         
         # Window icon
-        icon = str(self.p.parent) + self.sepa + 'icons' + self.sepa    # icon path
-        self.setWindowIcon(QIcon(icon + 'LOA.png'))
+        icon_path = str(self.p.parent) + self.sepa + 'icons' + self.sepa    # icon path
+        self.setWindowIcon(QIcon(icon_path + 'LOA.png'))
 
         # Create central widget
         central_widget = QWidget()
@@ -131,7 +137,7 @@ class MasterWindow(QMainWindow):
         self.server_bar.server_added.connect(self.route_server)
         
         self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_last_check
+            self.diagsConnectionPanel.update_last_msg
         )
         
         self.client_manager.server_identified.connect(
@@ -148,11 +154,11 @@ class MasterWindow(QMainWindow):
         )
 
         self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_last_check
+            self.diagsConnectionPanel.update_last_msg
         )
 
         self.client_manager.server_contacted.connect(
-            self.motorsConnectionPanel.update_last_check
+            self.motorsConnectionPanel.update_last_msg
         )
 
         self.client_manager.server_pinged.connect(
@@ -174,7 +180,12 @@ class MasterWindow(QMainWindow):
 
             Errors: message boxes are shown when the address is
             not conform to the ZMQ standards and when the client
-            did get not answer.   
+            did get not answer.
+
+            Arg:
+                address: (str)
+                    the address of the server in ZMQ
+                    format, using REQ.
         '''
         # probe the server to gather informations
         info = self.client_manager.probe_server(address)

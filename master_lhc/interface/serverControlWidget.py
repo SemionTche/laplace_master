@@ -21,6 +21,8 @@ class ServerControlWidget(QWidget):
         layout.setContentsMargins(32, 2, 4, 2)  # indent
         layout.setSpacing(8)
 
+        self.setMinimumHeight(26)
+
         # checkbox
         self.checkbox = QCheckBox()
         self.checkbox.setFixedWidth(20)

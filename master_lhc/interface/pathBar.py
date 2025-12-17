@@ -54,7 +54,7 @@ class PathBar(QWidget):
         Convenient function to acces to the path 
         where the data should be saved.
         '''
-        return self.save_entry.text()
+        return self.save_entry.text().strip()
     
     def set_path(self, path: str) -> None:
         '''
