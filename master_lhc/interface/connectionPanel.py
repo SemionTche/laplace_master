@@ -234,9 +234,19 @@ class ConnectionPanel(QWidget):
         Function used to transmit a signal from 'ServerItemWidget' 
         to 'MasterWindow' in order to indicate to 'ClientManager'
         which client should be connected / disconnected.
+
+        Change the toggle of the sub 'ServerControlWidget'.
         '''
         print(f"[ConnectionPanel {self.title}] emit {address} {connected}")
         self.server_connection_changed.emit(address, connected)   # emit from ServerItemWidget through MasterWindow to ClientManager
+
+        list_widgets = self.server_control_widgets.get(address)  # get the list of ServerControlWidget associated
+
+        if not list_widgets:  # if there is no sub ServerControlWidget
+            return            # get out of the function
+        
+        for _, widget in enumerate(list_widgets):  # for every sub ServerControlWidget
+            widget.toggle_connection_state()       # change the connected flag and icon
 
 
     def on_server_alive_changed(self, address: str, alive: bool) -> None:
