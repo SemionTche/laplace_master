@@ -137,7 +137,7 @@ class MasterWindow(QMainWindow):
         self.server_bar.server_added.connect(self.route_server)
         
         self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_last_msg
+            self.diagsConnectionPanel.update_server_last_msg
         )
         
         self.client_manager.server_identified.connect(
@@ -154,11 +154,11 @@ class MasterWindow(QMainWindow):
         )
 
         self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_last_msg
+            self.diagsConnectionPanel.update_server_last_msg
         )
 
         self.client_manager.server_contacted.connect(
-            self.motorsConnectionPanel.update_last_msg
+            self.motorsConnectionPanel.update_server_last_msg
         )
 
         self.client_manager.server_pinged.connect(

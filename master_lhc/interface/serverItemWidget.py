@@ -111,7 +111,7 @@ class ServerItemWidget(QWidget):
 
     def toggle_connection_state(self) -> None:
         '''
-        Function made to change the flag 'self.connected'.
+        Function made to change the flag 'self.connected' and corresponding icon.
         '''
         self.connected = not self.connected # change the flag
         
@@ -121,8 +121,9 @@ class ServerItemWidget(QWidget):
         
         self.update_last_msg() # update the last message time
 
-        # Emit the signal
-        print(f"[ServerItemWidget] emit {self.address} {self.connected}")
+        # Emit the signal to inform ConnectionPanel, then MasterWindow
+        # that a client should be open / close
+        print(f"[ServerItemWidget {self.name}] emit: {self.address} {self.connected}")
         self.connection_changed.emit(self.address, self.connected)
 
 

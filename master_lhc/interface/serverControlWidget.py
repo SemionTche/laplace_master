@@ -67,6 +67,6 @@ class ServerControlWidget(QWidget):
         # placeholder for later networking
         pass
 
-    def update_data(self, data: dict):
-        self.value.setText(f"{float(data["data"]):.3f}")
-        self.unit.setText(str(data["unit"]))
+    def update_positions(self, position: float, unit: str):
+        self.value.setText(f"{float(position):.5f}")
+        self.unit.setText(str(unit))
