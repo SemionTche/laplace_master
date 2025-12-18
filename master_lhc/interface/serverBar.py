@@ -1,6 +1,6 @@
+# libraries
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import pyqtSignal
-
 
 class ServerBar(QWidget):
     '''
@@ -35,6 +35,8 @@ class ServerBar(QWidget):
     def _emit_new_server(self) -> None:
         '''
         Function made to emit a signal when a server address is added.
+        Will be catched in 'MasterWindow' to probe the server address
+        in 'ClientManager'
         '''
         text = self.server_entry.text().strip() # get the address
         if text:

@@ -12,12 +12,13 @@ from interface.serverControlWidget import ServerControlWidget
 class ConnectionPanel(QWidget):
     '''
     Class made to display a list of server properties.
-    Two kinds of line are available: 'ServerItemWidget' and 'ServerControlWidget'.
+    Two kinds of lines are available: 'ServerItemWidget' and 'ServerControlWidget'.
     The first one is always added for any valid server address.
     The second one is used to control the degree of freedom of the server.
     '''
     # signal to transmit a connection changed from ServerItemWidget
-    # to MasterWindow where it will open / close the corresponding client.
+    # to MasterWindow where it will be transmit to ClientManager in order
+    # to  open / close the corresponding client.
     server_connection_changed = pyqtSignal(str, bool)
     
     def __init__(self, title: str = ""):
@@ -120,7 +121,7 @@ class ConnectionPanel(QWidget):
                     the server degree of freedom.
                     (number of setable elements)
         '''
-        self.server_control_widgets[address] = []
+        self.server_control_widgets[address] = []  # create a list of ServerControlSystem for this address
         for i in range(freedom):  # for each degree of freedom
             item = QListWidgetItem(self.server_list_widget)
             
@@ -130,7 +131,7 @@ class ConnectionPanel(QWidget):
             item.setSizeHint(widget.sizeHint())                     # the size of the line
             self.server_list_widget.addItem(item)                   # add the new item in the server list
             self.server_list_widget.setItemWidget(item, widget)     # assigns the QWidget (widget) that will be rendered inside this row (item)
-            self.server_control_widgets[address].append(widget)
+            self.server_control_widgets[address].append(widget)     # add in the widget in the list of ServerControlSystem
 
 
     def on_disconnect(self) -> None:
@@ -241,12 +242,14 @@ class ConnectionPanel(QWidget):
         self.server_connection_changed.emit(address, connected)   # emit from ServerItemWidget through MasterWindow to ClientManager
 
         list_widgets = self.server_control_widgets.get(address)  # get the list of ServerControlWidget associated
+        main_widget = self.server_widgets.get(address)           # get the ServerItemWidget corresponding
 
-        if not list_widgets:  # if there is no sub ServerControlWidget
-            return            # get out of the function
+        if not list_widgets or not main_widget:  # if there is no sub ServerControlWidget or no ServerItemWidget
+            return                               # get out of the function
         
-        for _, widget in enumerate(list_widgets):  # for every sub ServerControlWidget
-            widget.toggle_connection_state()       # change the connected flag and icon
+        for _, widget in enumerate(list_widgets):          # for every sub ServerControlWidget
+            if main_widget.connected != widget.connected:  # if the ServerItemWidget connection flag is different from the one in ServerControlWidget
+                widget.toggle_connection_state()           # change the connected flag and icon
 
 
     def on_server_alive_changed(self, address: str, alive: bool) -> None:
@@ -271,7 +274,8 @@ class ConnectionPanel(QWidget):
             widget.toggle_connection_state()      # change the state of this line
     
 
-    def update_server_data(self, address: str, data: dict):
+    def update_server_data(self, address: str, 
+                                    data: dict) -> None:
         '''
         Function made to transmit the data received in ClientManager
         in the corresponding ServerControlWidget to display the current
@@ -289,10 +293,11 @@ class ConnectionPanel(QWidget):
         list_wigets = self.server_control_widgets[address] # get the list freedom of the operating system
         
         if not list_wigets:  # if there is no ServerControlSystem
-            return
+            return           # get out of the function
         
-        for i, widget in enumerate(list_wigets):
-            if isinstance(widget, ServerControlWidget):
+        for i, widget in enumerate(list_wigets):            # for every ServerControlSystem
+            if isinstance(widget, ServerControlWidget):     # if the widget is compatible
+                # update the position and the unit of the operating system
                 widget.update_positions(data["positions"][i], data["unit"])
     
         # def update_server_data_from_server_list(self, address: str, data: dict):

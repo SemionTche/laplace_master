@@ -1,19 +1,35 @@
+# libraries
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QCheckBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-import pathlib, os
+
+import pathlib
 
 class ServerControlWidget(QWidget):
+    '''
+    '''
     def __init__(self, address: str, motor_index: int):
-        super().__init__()
+        '''
+
+            Args:
+                address: (str)
+                    the server address.
+                
+                motor_index: (int)
+                    the corresponding number in the server degree of freedom.
+        '''
+        
+        super().__init__() # heritage from QWidget
 
         self.address = address
         self.motor_index = motor_index
-        self.connected = True  # placeholder flag
+        self.connected = True  # connection flag
 
         # icons
-        p = pathlib.Path(__file__)
-        icon_path = p.parent / "icons"
+        p = pathlib.Path(__file__)        # get the path of the file
+        icon_path = p.parent / "icons"    # path to the icon folder
+        
+        # build the check and uncheck icons
         self.connected_icon = QIcon(str(icon_path / "connected.png"))
         self.disconnected_icon = QIcon(str(icon_path / "disconnected.png"))
 

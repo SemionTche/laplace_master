@@ -1,3 +1,4 @@
+# libraries
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QLabel, QCheckBox
 )
@@ -5,7 +6,6 @@ from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon
 
 import pathlib
-import os
 
 class ServerItemWidget(QWidget):
     '''
@@ -15,7 +15,9 @@ class ServerItemWidget(QWidget):
     A flag 'self.connected' indicates if the communication should
     be made with the server.
     '''
+    
     connection_changed = pyqtSignal(str, bool)  # address, connected
+    
     def __init__(self, 
                  address: str,
                  name: str = "Unkown"):
@@ -34,13 +36,12 @@ class ServerItemWidget(QWidget):
         
         super().__init__() # heritage from QWidget
         
-        p = pathlib.Path(__file__)                          # get the path of the file
-        sepa = os.sep                                       # define the separator no matter of the os
-        self.icon = str(p.parent) + sepa + 'icons' + sepa   # path to the icon folder
+        p = pathlib.Path(__file__)       # get the path of the file
+        icon_path = p.parent / 'icons'   # path to the icon folder
 
         # build the check and uncheck icons
-        self.connected_icon = QIcon(self.icon + 'connected.png')
-        self.disconnected_icon = QIcon(self.icon + 'disconnected.png')
+        self.connected_icon = QIcon(str(icon_path / 'connected.png'))
+        self.disconnected_icon = QIcon(str(icon_path / 'disconnected.png'))
 
         self.address = address
         self.name = name
@@ -103,8 +104,7 @@ class ServerItemWidget(QWidget):
 
     def is_selected(self) -> bool:
         '''
-        Conveniant function to access to the statut 'connected'
-        of the server.
+        Helper function to access to the flag 'connected' of the server.
         '''
         return self.checkbox.isChecked()
 
@@ -112,6 +112,9 @@ class ServerItemWidget(QWidget):
     def toggle_connection_state(self) -> None:
         '''
         Function made to change the flag 'self.connected' and corresponding icon.
+        Send a signal when the flag change catched in ConnectionPanel to change
+        the ServerControlWidget corresponding to this server address and then
+        in MasterWindow to transmit it to ClientManager and open / close the connection.
         '''
         self.connected = not self.connected # change the flag
         
@@ -122,7 +125,7 @@ class ServerItemWidget(QWidget):
         self.update_last_msg() # update the last message time
 
         # Emit the signal to inform ConnectionPanel, then MasterWindow
-        # that a client should be open / close
+        # that a client should be open / close in ClientManager
         print(f"[ServerItemWidget {self.name}] emit: {self.address} {self.connected}")
         self.connection_changed.emit(self.address, self.connected)
 
