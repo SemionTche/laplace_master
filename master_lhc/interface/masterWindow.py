@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSettings, QTimer
 from PyQt6.QtGui import QIcon
 
-import os
 import pathlib
 import qdarkstyle
 
@@ -29,7 +28,6 @@ class MasterWindow(QMainWindow):
         super().__init__() # heritage from QMainWindow
 
         self.p = pathlib.Path(__file__)  # current path of the file
-        self.sepa = os.sep               # separator (depends on the os)
         
         # load the settings
         self.settings = QSettings(str(self.p.parent.parent / "config.ini"), QSettings.Format.IniFormat)
@@ -65,8 +63,8 @@ class MasterWindow(QMainWindow):
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         
         # Window icon
-        icon_path = str(self.p.parent) + self.sepa + 'icons' + self.sepa    # icon path
-        self.setWindowIcon(QIcon(icon_path + 'LOA.png'))
+        icon_path = self.p.parent / 'icons'    # icon path
+        self.setWindowIcon(QIcon(str(icon_path / 'LOA.png')))
 
         # Create central widget
         central_widget = QWidget()
