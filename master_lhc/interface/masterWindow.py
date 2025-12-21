@@ -1,37 +1,71 @@
+# libraries
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
+    QMainWindow, QWidget, QLabel, QGridLayout,
     QVBoxLayout, QHBoxLayout, QMessageBox
 )
 from PyQt6.QtCore import Qt, QSettings, QTimer
 from PyQt6.QtGui import QIcon
 
-import sys
-import os
-import qdarkstyle
 import pathlib
+import qdarkstyle
 
-from .connectionPanel import ConnectionPanel
-from .pathBar import PathBar
-from .serverBar import ServerBar
+# project
+from interface.connectionPanel import ConnectionPanel
+from interface.optimizationPanel import OptimizationPanel
+from interface.pathBar import PathBar
+from interface.serverBar import ServerBar
 from client.clientManager import ClientManager
 
 class MasterWindow(QMainWindow):
-    
+    '''
+    Main class of the 'master_lhc' project.
+    Create the main window and connect the interface 
+    and the server configurations. 
+    '''
     def __init__(self):
-        
+        '''
+        Initialization of the 'MasterWindow' class.
+        '''
         super().__init__() # heritage from QMainWindow
 
-        # Set window title
+        self.p = pathlib.Path(__file__)  # current path of the file
+        
+        # load the settings
+        self.settings = QSettings(str(self.p.parent.parent / "config.ini"), QSettings.Format.IniFormat)
+
+        self.set_up()  # initialize the widgets and place them in the window
+
+        # Manager handling one client per server
+        self.client_manager = ClientManager()
+        
+        # Ping timer
+        self.timer = QTimer()
+        ping_time_ms = self.settings.value("server/ping_time_ms", defaultValue=3000, type=int)
+        self.timer.start(ping_time_ms)
+        
+        self.actions()  # signals
+
+
+    @property
+    def path_to_save(self) -> str:
+        '''
+        Property made to have a conveniant access to the saving path.
+        '''
+        return self.path_bar.path_to_save
+
+
+    def set_up(self) -> None:
+        '''
+        Function made to initialize the widgets and to place them in the 'MasterWindow'.
+        '''
+        # Set window title, geometry and style
         self.setWindowTitle("Master Window")
-        p = pathlib.Path(__file__)
-        sepa = os.sep
-        self.icon = str(p.parent) + sepa + 'icons' + sepa
-
-        self.settings = QSettings(str(p.parent / "interface.ini"), QSettings.Format.IniFormat)
-
-        self.setWindowIcon(QIcon(self.icon+'LOA.png'))
-        self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         self.setGeometry(100, 30, 1000, 700)
+        self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
+        
+        # Window icon
+        icon_path = self.p.parent / 'icons'    # icon path
+        self.setWindowIcon(QIcon(str(icon_path / 'LOA.png')))
 
         # Create central widget
         central_widget = QWidget()
@@ -41,88 +75,67 @@ class MasterWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        # top line
+        ### top line (pathBar and serverBar)
         top_container = QHBoxLayout()
-
-        # path
-        saved_path = self.settings.value("pathSavingEntry", defaultValue="", type=str)
-        self.path_bar = PathBar(saved_path)
-
-        top_container.addStretch()          # add space
-        top_container.addWidget(self.path_bar)
-        top_container.addStretch()
-
-        # add server
-        self.server_bar = ServerBar()
-        top_container.addWidget(self.server_bar)
-        top_container.addStretch()
-
         main_layout.addLayout(top_container)
 
-        # 2 x 2 grid
+            # pathBar
+        saved_path = self.settings.value("interface/path_saving_entry", defaultValue="", type=str)
+        self.path_bar = PathBar(saved_path)
+
+        # top_container.addStretch(3)          # add space
+        top_container.addWidget(self.path_bar)
+        # top_container.addStretch(2)
+
+            # serverBar
+        self.server_bar = ServerBar()
+        top_container.addWidget(self.server_bar)
+        # top_container.addStretch(3)
+
+        ### 2 x 2 grid
         grid_layout = QGridLayout()
         main_layout.addLayout(grid_layout)
 
-        # Top-left label
+            # Top-left label
         laser_label = QLabel("laser")
         laser_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Top-right layout for diags panel
-        diags_widget = QWidget()
-        diags_layout = QVBoxLayout()
-        diags_widget.setLayout(diags_layout)
+            # Top-right layout for diags panel
+        self.diagsConnectionPanel = ConnectionPanel("Diagnostics")
 
-        diags_label = QLabel("diags")
-        diags_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        diags_layout.addWidget(diags_label)
+            # Bottom-left label
+        self.motorsConnectionPanel = ConnectionPanel("Operating system")
 
-        self.diagsConnectionPanel = ConnectionPanel()
-        diags_layout.addWidget(self.diagsConnectionPanel)
+            # Bottom-right label
+        self.optimizationPanel = OptimizationPanel()
 
-        # Bottom-left label
-        motors_widget = QWidget()
-        motors_layout = QVBoxLayout()
-        motors_widget.setLayout(motors_layout)
-
-        motors_label = QLabel("motors")
-        motors_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        motors_layout.addWidget(motors_label)
-
-        self.motorsConnectionPanel = ConnectionPanel()
-        motors_layout.addWidget(self.motorsConnectionPanel)
-
-        # Bottom-right label
-        bo_label = QLabel("BO")
-        bo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Add widgets to the grid layout
+            # Add widgets to the grid layout
         grid_layout.addWidget(laser_label, 0, 0)
-        grid_layout.addWidget(diags_widget, 0, 1)
-        grid_layout.addWidget(motors_widget, 1, 0)
-        grid_layout.addWidget(bo_label, 1, 1)
+        grid_layout.addWidget(self.diagsConnectionPanel, 0, 1)
+        grid_layout.addWidget(self.motorsConnectionPanel, 1, 0)
+        grid_layout.addWidget(self.optimizationPanel, 1, 1)
 
-        # Set column and row stretch
+            # Set column and row stretch
         grid_layout.setRowStretch(0, 1)
         grid_layout.setRowStretch(1, 1)
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 1)
 
-        # client
-        self.client_manager = ClientManager()
-        self.timer = QTimer()
-        self.timer.start(3000)
 
-        self.actions()
-
-    def actions(self):
-        # update the 'interface.ini' file
+    def actions(self) -> None:
+        '''
+        Defines all the signals between the clients and the interface.
+        '''
+        # update the 'config.ini' file when the 'path saving entry' is modified
         self.path_bar.save_entry.textChanged.connect(
-            lambda text: self.settings.setValue("pathSavingEntry", text)
+            lambda text: self.settings.setValue("interface/path_saving_entry", text)
         )
+
+        # when a server address is given, use the route procedure
         self.server_bar.server_added.connect(self.route_server)
         
         self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_last_check
+            self.diagsConnectionPanel.update_server_last_msg
         )
         
         self.client_manager.server_identified.connect(
@@ -139,11 +152,11 @@ class MasterWindow(QMainWindow):
         )
 
         self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_last_check
+            self.diagsConnectionPanel.update_server_last_msg
         )
 
         self.client_manager.server_contacted.connect(
-            self.motorsConnectionPanel.update_last_check
+            self.motorsConnectionPanel.update_server_last_msg
         )
 
         self.client_manager.server_pinged.connect(
@@ -152,49 +165,86 @@ class MasterWindow(QMainWindow):
         self.client_manager.server_pinged.connect(
             self.motorsConnectionPanel.on_server_alive_changed
         )
+        self.client_manager.server_data_received.connect(
+            self.motorsConnectionPanel.update_server_data
+        )
 
-    def route_server(self, address: str):
+        self.optimizationPanel.server_connection_changed.connect(
+            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        )
+
+        self.optimizationPanel.motor_control_changed.connect(
+            self.client_manager.set_optimization_motor_control
+        )
+
+
+    def route_server(self, address: str) -> None:
+        '''
+        Function called when a new server address is provided.
+        Probe the server and use the informations gather to create 
+        the elements in the corresponding 'connectionPanel'.
+
+            Errors: message boxes are shown when the address is
+            not conform to the ZMQ standards and when the client
+            did get not answer.
+
+            Arg:
+                address: (str)
+                    the address of the server in ZMQ
+                    format, using REQ.
+        '''
+        # probe the server to gather informations
         info = self.client_manager.probe_server(address)
         
+        # if there is no information (an error was raised)
         if info is None:
+            # create a message box
             QMessageBox.warning(self, "Invalid address",
             f'The address "{address}" was not found or is invalid.',
             QMessageBox.StandardButton.Ok)
-            return
+            return                  # get out of the routing session
 
+        # if the client did get not answer
         if not info.alive:
+            # create a message box
             QMessageBox.warning(self, "Server unreachable",
             f'The server "{address}" did not respond.',
             QMessageBox.StandardButton.Ok)
-            return
+            return                 # get out of the routing session
 
+        # if the device is a camera
         if info.device == "__CAMERA__":
+            # top right connectionPanel
             self.diagsConnectionPanel.add_server(
                 address=info.address,
                 name=info.name or "Unknown"
             )
+        
+        # elif the device is an 'operating system'
         elif info.device == "__MOTORS__" or info.device == "__GAS__":
+            # bottom left connectionPanel
             self.motorsConnectionPanel.add_server(
                 address=info.address,
                 name=info.name or "Unkwon"
             )
+            # create a subline per degree of freedom
             if info.freedom:
                 self.motorsConnectionPanel.add_server_controls(
                     info.address,
                     info.freedom
                 )
+        
+        elif info.device == "__OPT__":
+            self.optimizationPanel.add_server(
+                address=info.address,
+                name=info.name or "Optimization"
+            )
 
-    @property
-    def path_to_save(self):
-        return self.path_bar.path_to_save
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
+        '''
+        Function called when the window is closing.
+        Close every client of client manager.
+        '''
         self.client_manager.close_all()
         event.accept()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MasterWindow()
-    window.show()
-    sys.exit(app.exec())

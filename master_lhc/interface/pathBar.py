@@ -1,3 +1,4 @@
+# libraries
 from PyQt6.QtWidgets import (
     QWidget, QLineEdit, QPushButton, QHBoxLayout, QFileDialog, QLabel
 )
@@ -51,10 +52,9 @@ class PathBar(QWidget):
     @property
     def path_to_save(self) -> str:
         '''
-        Convenient function to acces to the path 
-        where the data should be saved.
+        Helper to access to the path where the data should be saved.
         '''
-        return self.save_entry.text()
+        return self.save_entry.text().strip()
     
     def set_path(self, path: str) -> None:
         '''
