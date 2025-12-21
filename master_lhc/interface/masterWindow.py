@@ -11,6 +11,7 @@ import qdarkstyle
 
 # project
 from interface.connectionPanel import ConnectionPanel
+from interface.optimizationPanel import OptimizationPanel
 from interface.pathBar import PathBar
 from interface.serverBar import ServerBar
 from client.clientManager import ClientManager
@@ -106,14 +107,13 @@ class MasterWindow(QMainWindow):
         self.motorsConnectionPanel = ConnectionPanel("Operating system")
 
             # Bottom-right label
-        bo_label = QLabel("BO")
-        bo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.optimizationPanel = OptimizationPanel()
 
             # Add widgets to the grid layout
         grid_layout.addWidget(laser_label, 0, 0)
         grid_layout.addWidget(self.diagsConnectionPanel, 0, 1)
         grid_layout.addWidget(self.motorsConnectionPanel, 1, 0)
-        grid_layout.addWidget(bo_label, 1, 1)
+        grid_layout.addWidget(self.optimizationPanel, 1, 1)
 
             # Set column and row stretch
         grid_layout.setRowStretch(0, 1)
@@ -167,6 +167,14 @@ class MasterWindow(QMainWindow):
         )
         self.client_manager.server_data_received.connect(
             self.motorsConnectionPanel.update_server_data
+        )
+
+        self.optimizationPanel.server_connection_changed.connect(
+            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        )
+
+        self.optimizationPanel.motor_control_changed.connect(
+            self.client_manager.set_optimization_motor_control
         )
 
 
@@ -225,6 +233,12 @@ class MasterWindow(QMainWindow):
                     info.address,
                     info.freedom
                 )
+        
+        elif info.device == "__OPT__":
+            self.optimizationPanel.add_server(
+                address=info.address,
+                name=info.name or "Optimization"
+            )
 
 
     def closeEvent(self, event) -> None:

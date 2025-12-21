@@ -290,7 +290,7 @@ class ConnectionPanel(QWidget):
                     Must include a 'positions' key, that return a list 
                     of length equal to the degree of freedom.
         '''
-        list_wigets = self.server_control_widgets[address] # get the list freedom of the operating system
+        list_wigets = self.server_control_widgets.get(address) # get the list freedom of the operating system
         
         if not list_wigets:  # if there is no ServerControlSystem
             return           # get out of the function

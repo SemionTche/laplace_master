@@ -86,3 +86,6 @@ class ClientManager(QObject):
         client = self.clients.get(address)
         if client:
             client.set_connected(enabled)
+    
+    def set_optimization_motor_control(self, enabled: bool):
+        pass
