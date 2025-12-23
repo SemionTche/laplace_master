@@ -1,13 +1,14 @@
 # libraries
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem,
-    QLabel
+    QLabel, QGroupBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
 # project
 from interface.serverItemWidget import ServerItemWidget
 from interface.serverControlWidget import ServerControlWidget
+
 
 class ConnectionPanel(QWidget):
     '''
@@ -20,7 +21,7 @@ class ConnectionPanel(QWidget):
     # to MasterWindow where it will be transmit to ClientManager in order
     # to  open / close the corresponding client.
     server_connection_changed = pyqtSignal(str, bool)
-    
+
     def __init__(self, title: str = ""):
         '''
         Initialization of the 'ConnectionPanel' class.
@@ -29,60 +30,59 @@ class ConnectionPanel(QWidget):
                 title: (str)
                     the title of the ConnectionPanel
         '''
-        
-        super().__init__() # heritage from QWidget
+        super().__init__()  # heritage from QWidget
 
         self.title = title  # title of the ConnectionPanel
 
-        # dictionary of the 'ServerItemWidget's stored in the ConnectionPanel 
+        # dictionary of the 'ServerItemWidget's stored in the ConnectionPanel
         self.server_widgets: dict[str, ServerItemWidget] = {}
-        
-        # dictionary of the 'ServerControlWidget's stored in the ConnectionPanel 
+
+        # dictionary of the 'ServerControlWidget's stored in the ConnectionPanel
         self.server_control_widgets: dict[str, list[ServerControlWidget]] = {}
 
         # Internal list of server
         self.server_list_data = []
 
         ### Main layout
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-            
-            # title
-        title_label = QLabel(self.title)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
 
-            # list container
-        self.server_list_widget = QListWidget()  # QList containing all the widgets displayed (both ServerItemWidget and ServerControlWidget)
+        # Main outer layout
+        outer_layout = QVBoxLayout(self)
+
+        # Group box
+        self.group_box = QGroupBox(title)
+        outer_layout.addWidget(self.group_box)
+
+        # inside the group box
+        main_layout = QVBoxLayout(self.group_box)
+
+        # list container
+        self.server_list_widget = QListWidget()
         main_layout.addWidget(self.server_list_widget)
 
-            # connect / disconnect button
+        # connect / disconnect button
         self.disconnect_button = QPushButton("Connect / Disconnect")
-        self.disconnect_button.clicked.connect(self.on_disconnect)  # use 'on_disconnect" when the button is clicked
+        self.disconnect_button.clicked.connect(self.on_disconnect)
         main_layout.addWidget(self.disconnect_button)
 
-
-    def update_server_name(self, address: str, 
-                                 newName: str) -> None:
+    def update_server_name(self, address: str,
+                           newName: str) -> None:
         '''
         Helper to change the name of the server.
         '''
-        widget = self.server_widgets.get(address) # get the widget from the dictionary
-        if widget:                                # if there is a widget
-            widget.set_name(newName)              # change the name
-
+        widget = self.server_widgets.get(address)  # get the widget from the dictionary
+        if widget:                                 # if there is a widget
+            widget.set_name(newName)               # change the name
 
     def update_server_last_msg(self, address: str):
         '''
         Helper to change the last time a message was received.
         '''
-        widget = self.server_widgets.get(address) # get the widget from the dictionary
-        if widget:                                # if there is a widget
-            widget.update_last_msg()              # change the last time a message was received
+        widget = self.server_widgets.get(address)  # get the widget from the dictionary
+        if widget:                                 # if there is a widget
+            widget.update_last_msg()               # change the last time a message was received
 
-
-    def add_server(self, address: str, 
-                            name: str = "Unknown") -> None:
+    def add_server(self, address: str,
+                   name: str = "Unknown") -> None:
         '''
         Add a server line in the ConnectionPanel.
         Bind the 'connection_changed' signal to the
@@ -91,25 +91,24 @@ class ConnectionPanel(QWidget):
             Args:
                 address: (str)
                     the server address.
-                
+
                 name: (str)
                     the name of the server, default 'Unknown'.
         '''
         # widget is content of the row, item is the layout of the row (size, position, ...)
-        item = QListWidgetItem(self.server_list_widget) # create a new list item
+        item = QListWidgetItem(self.server_list_widget)  # create a new list item
 
-        widget = ServerItemWidget(address=address, name=name)                   # initialize the new server line that will be displayed inside the item
-        widget.connection_changed.connect(self.on_server_connection_changed)    # bind the signal to emit when the connection changed
+        widget = ServerItemWidget(address=address, name=name)                   # initialize the new server line
+        widget.connection_changed.connect(self.on_server_connection_changed)    # bind the signal
 
         item.setSizeHint(widget.sizeHint())                 # the size of the line
-        self.server_list_widget.addItem(item)               # add the new item in the server list
-        self.server_list_widget.setItemWidget(item, widget) # assigns the QWidget (widget) that will be rendered inside this row (item)
+        self.server_list_widget.addItem(item)               # add the new item
+        self.server_list_widget.setItemWidget(item, widget) # assign widget to row
 
-        self.server_widgets[address] = widget   # add a new address in the dictionary
+        self.server_widgets[address] = widget               # store widget
 
-
-    def add_server_controls(self, address: str, 
-                                  freedom: int) -> None:
+    def add_server_controls(self, address: str,
+                            freedom: int) -> None:
         '''
         Add a control line in the ConnectionPanel.
 
@@ -121,196 +120,134 @@ class ConnectionPanel(QWidget):
                     the server degree of freedom.
                     (number of setable elements)
         '''
-        self.server_control_widgets[address] = []  # create a list of ServerControlSystem for this address
-        for i in range(freedom):  # for each degree of freedom
+        self.server_control_widgets[address] = []
+
+        for i in range(freedom):
             item = QListWidgetItem(self.server_list_widget)
-            
-            # initialize the new server line that will be displayed inside the item
-            widget = ServerControlWidget(address, i + 1)  # number of the element start by 1 rather than 0
 
-            item.setSizeHint(widget.sizeHint())                     # the size of the line
-            self.server_list_widget.addItem(item)                   # add the new item in the server list
-            self.server_list_widget.setItemWidget(item, widget)     # assigns the QWidget (widget) that will be rendered inside this row (item)
-            self.server_control_widgets[address].append(widget)     # add in the widget in the list of ServerControlSystem
+            widget = ServerControlWidget(address, i + 1)  # numbering starts at 1
+            widget.enable_selection(False)                # controls are NOT selectable by default
 
+            item.setSizeHint(widget.sizeHint())
+            self.server_list_widget.addItem(item)
+            self.server_list_widget.setItemWidget(item, widget)
+
+            self.server_control_widgets[address].append(widget)
 
     def on_disconnect(self) -> None:
         '''
-        Function used when the 'Connect / Disconnect' button is pressed. 
+        Function used when the 'Connect / Disconnect' button is pressed.
         Enable the checkBox of every widget in 'server_list_widget'.
         '''
-        for i in range(self.server_list_widget.count()): # for every element in the server list
-            # get the current widget
+        for i in range(self.server_list_widget.count()):
             widget = self.server_list_widget.itemWidget(
                 self.server_list_widget.item(i)
             )
-            # if it is a compatible widget
             if isinstance(widget, (ServerItemWidget, ServerControlWidget)):
-                widget.enable_selection(True)  # enable the checkBox selection
+                widget.enable_selection(True)
 
-        self._replace_buttons() # create the new button to confirm the selection
-
+        self._replace_buttons()
 
     def restore_disconnect_button(self) -> None:
         '''
         Function used to restore the 'Connect / Disconnect' button.
         '''
         parent_layout = self.cancel_button.parentWidget().layout()
-        parent_layout.removeWidget(self.cancel_button)                 # remove the buttons
+        parent_layout.removeWidget(self.cancel_button)
         parent_layout.removeWidget(self.confirm_button)
+
         self.cancel_button.deleteLater()
         self.confirm_button.deleteLater()
 
-        self.disconnect_button = QPushButton("Connect / Disconnect")   # recreate the button
-        self.disconnect_button.clicked.connect(self.on_disconnect)     # bind it
-        parent_layout.addWidget(self.disconnect_button)                # add it to the layout
-
-        for index in range(self.server_list_widget.count()):
-            item = self.server_list_widget.item(index)
-            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
-    
+        self.disconnect_button = QPushButton("Connect / Disconnect")
+        self.disconnect_button.clicked.connect(self.on_disconnect)
+        parent_layout.addWidget(self.disconnect_button)
 
     def _replace_buttons(self) -> None:
         '''
-        Function used to replace the 'Connect / Disconnect' button from
-        the ConnectionPanel and to replace it with two temporary buttons
-        'Confirm' and 'Cancel' that will be destroyed when used.
+        Function used to replace the 'Connect / Disconnect' button
+        with 'Confirm' and 'Cancel'.
         '''
         layout = self.disconnect_button.parentWidget().layout()
 
-        layout.removeWidget(self.disconnect_button) # remove the 'Connect / Disconnect' button
-        self.disconnect_button.deleteLater()  
+        layout.removeWidget(self.disconnect_button)
+        self.disconnect_button.deleteLater()
 
-        self.cancel_button = QPushButton("Cancel")  # create the new buttons
+        self.cancel_button = QPushButton("Cancel")
         self.confirm_button = QPushButton("Confirm")
 
-        self.cancel_button.clicked.connect(self.cancel_selection)  # bind the new buttons
+        self.cancel_button.clicked.connect(self.cancel_selection)
         self.confirm_button.clicked.connect(self.confirm_selection)
 
-        layout.addWidget(self.cancel_button) # add the new buttons
+        layout.addWidget(self.cancel_button)
         layout.addWidget(self.confirm_button)
-
 
     def cancel_selection(self) -> None:
         '''
-        Function made to reset the configuration after using the 'Cancel' button. 
-        Disable the checkBox of the widget in the server list and restaure the
-        'Connect / Disconnect' button.
+        Reset configuration after using the 'Cancel' button.
         '''
-        for i in range(self.server_list_widget.count()): # for every element in the server list
-            # get the current widget
+        for i in range(self.server_list_widget.count()):
             widget = self.server_list_widget.itemWidget(
                 self.server_list_widget.item(i)
             )
-            # if it is a compatible widget
             if isinstance(widget, (ServerItemWidget, ServerControlWidget)):
-                widget.enable_selection(False)  # disable the checkBox selection
+                widget.enable_selection(False)
 
-        self.restore_disconnect_button()  # restaure the 'Connected / Disconnected' button
-
+        self.restore_disconnect_button()
 
     def confirm_selection(self) -> None:
         '''
-        Function made to reset the configuration after using the 'Confirm' button. 
-        Change the state of the widget selected, disable the checkBox of the widget
-        in the server list and restaure the 'Connect / Disconnect' button.
+        Apply selection after using the 'Confirm' button.
         '''
-        for i in range(self.server_list_widget.count()):    # for every element in the server list
-            # get the current widget
+        for i in range(self.server_list_widget.count()):
             widget = self.server_list_widget.itemWidget(
                 self.server_list_widget.item(i)
             )
-            # if it is a compatible widget
             if isinstance(widget, (ServerItemWidget, ServerControlWidget)):
                 if widget.is_selected():
-                    widget.toggle_connection_state()  # change the flag and icon of connection state
-                widget.enable_selection(False)        # disable the checkBox
+                    widget.toggle_connection_state()
+                widget.enable_selection(False)
 
-        self.restore_disconnect_button() # restaure the 'Connected / Disconnected' button
+        self.restore_disconnect_button()
 
-
-    def on_server_connection_changed(self, address: str, 
-                                         connected: bool) -> None:
+    def on_server_connection_changed(self, address: str,
+                                     connected: bool) -> None:
         '''
-        Function used to transmit a signal from 'ServerItemWidget' 
-        to 'MasterWindow' in order to indicate to 'ClientManager'
-        which client should be connected / disconnected.
-
-        Change the toggle of the sub 'ServerControlWidget'.
+        Transmit a signal from 'ServerItemWidget' to MasterWindow
+        and synchronize ServerControlWidget states.
         '''
         print(f"[ConnectionPanel {self.title}] emit {address} {connected}")
-        self.server_connection_changed.emit(address, connected)   # emit from ServerItemWidget through MasterWindow to ClientManager
+        self.server_connection_changed.emit(address, connected)
 
-        list_widgets = self.server_control_widgets.get(address)  # get the list of ServerControlWidget associated
-        main_widget = self.server_widgets.get(address)           # get the ServerItemWidget corresponding
+        list_widgets = self.server_control_widgets.get(address)
+        main_widget = self.server_widgets.get(address)
 
-        if not list_widgets or not main_widget:  # if there is no sub ServerControlWidget or no ServerItemWidget
-            return                               # get out of the function
-        
-        for _, widget in enumerate(list_widgets):          # for every sub ServerControlWidget
-            if main_widget.connected != widget.connected:  # if the ServerItemWidget connection flag is different from the one in ServerControlWidget
-                widget.toggle_connection_state()           # change the connected flag and icon
+        if not list_widgets or not main_widget:
+            return
 
+        for widget in list_widgets:
+            if main_widget.connected != widget.connected:
+                widget.toggle_connection_state()
 
     def on_server_alive_changed(self, address: str, alive: bool) -> None:
         '''
-        Function used to transmit a message comming from 'ClientManager'
-        through 'MasterWindow'. Indicate if a server die (not answering to the ping).
-        Change the connection state of the corresponding 'ServerItemWidget'.
-
-            Args:
-                address: (str)
-                    the server address.
-                
-                alive: (bool)
-                    indicate if the server still answering.
-                    (False implies the server is not answering anymore)
+        Indicate if a server stops answering.
         '''
-        widget = self.server_widgets.get(address) # get the widget
-        if not widget:                            # if there is not server with this address
-            return                                # get out of the function
+        widget = self.server_widgets.get(address)
+        if not widget:
+            return
 
-        if not alive and widget.connected:        # if the server stoped to answer and it was consider as connected
-            widget.toggle_connection_state()      # change the state of this line
-    
+        if not alive and widget.connected:
+            widget.toggle_connection_state()
 
-    def update_server_data(self, address: str, 
-                                    data: dict) -> None:
+    def update_server_data(self, address: str,
+                           data: dict) -> None:
         '''
-        Function made to transmit the data received in ClientManager
-        in the corresponding ServerControlWidget to display the current
-        position of the operating system.
-
-            Args:
-                address: (str)
-                    the server address
-                
-                data: (dict)
-                    the dictionary sent by server.
-                    Must include a 'positions' key, that return a list 
-                    of length equal to the degree of freedom.
+        Transmit data to ServerControlWidget.
         '''
-        list_wigets = self.server_control_widgets.get(address) # get the list freedom of the operating system
-        
-        if not list_wigets:  # if there is no ServerControlSystem
-            return           # get out of the function
-        
-        for i, widget in enumerate(list_wigets):            # for every ServerControlSystem
-            if isinstance(widget, ServerControlWidget):     # if the widget is compatible
-                # update the position and the unit of the operating system
-                widget.update_positions(data["positions"][i], data["unit"])
-    
-        # def update_server_data_from_server_list(self, address: str, data: dict):
-        #     '''
-        #     hold version.
-        #     '''
-        #     for i in range(self.server_list_widget.count()):
-        #         widget = self.server_list_widget.itemWidget(
-        #             self.server_list_widget.item(i)
-        #         )
-            
-        #         if not isinstance(widget, ServerControlWidget):
-        #             continue
+        list_widgets = self.server_control_widgets.get(address)
+        if not list_widgets:
+            return
 
-        #         if widget.address == address:
-        #             widget.update_data(data)
+        for i, widget in enumerate(list_widgets):
+            widget.update_positions(data["positions"][i], data["unit"])

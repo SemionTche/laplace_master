@@ -168,6 +168,10 @@ class MasterWindow(QMainWindow):
             self.motorsConnectionPanel.update_server_last_msg
         )
 
+        self.client_manager.server_contacted.connect(
+            self.optimizationPanel.update_server_last_msg
+        )
+
         self.client_manager.server_pinged.connect(
             self.diagsConnectionPanel.on_server_alive_changed
         )
