@@ -5,6 +5,12 @@ import time
 
 from PyQt6.QtCore import pyqtSignal
 
+# project
+from server_lhc.protocol import (
+    CMD_INFO, CMD_PING, CMD_GET, CMD_SAVE, CMD_STOP,
+    make_info_request, make_ping, make_message
+)
+
 class MasterClient:
     '''
     Class made in order to contact a server.
@@ -72,15 +78,13 @@ class MasterClient:
     def ping(self) -> bool:
         if not self.connected:
             return False
-        message = self.making_ping()
-        reply = self.send_message(message)
+        reply = self.send_message(make_ping("Master", "unknown"))
         return reply.get("payload").get("PING") == "PONG"
 
     def info(self):
         if not self.connected:
             return False
-        message = self.making_info()
-        reply = self.send_message(message)
+        reply = self.send_message(make_info_request("Master", "unknown"))
         return reply.get("payload")
 
     def get(self) -> str | None:
