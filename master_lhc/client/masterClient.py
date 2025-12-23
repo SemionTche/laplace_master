@@ -5,6 +5,11 @@ import time
 
 from PyQt6.QtCore import pyqtSignal
 
+# project
+from server_lhc.protocol import (
+    make_ping, make_info_request, make_get_request
+)
+
 class MasterClient:
     '''
     Class made in order to contact a server.
@@ -26,6 +31,7 @@ class MasterClient:
 
         self.last_contact_time = 0.0
         self.enabled = True
+        self.server_name = "Unknown"
 
     def set_connected(self, enabled: bool):
         if self.connected == enabled:
@@ -50,12 +56,12 @@ class MasterClient:
             except Exception:
                 pass
 
-    def send_message(self, message: str) -> str | None:
+    def send_message(self, message: dict) -> str | None:
         if not self.connected:
             return None
         try:
-            self.socket.send_string(message)
-            reply = self.socket.recv_string()
+            self.socket.send_json(message)
+            reply = self.socket.recv_json()
             self.last_contact_time = time.time()
             
             # emit signal through client manager (optional, see note below)
@@ -72,14 +78,23 @@ class MasterClient:
     def ping(self) -> bool:
         if not self.connected:
             return False
-        reply = self.send_message("__PING__")
-        return reply == "__PONG__"
+        reply = self.send_message(make_ping("Master", self.server_name))
+        return reply.get("payload").get("PING") == "PONG"
 
-    def get(self) -> str | None:
+    def info(self):
+        if not self.connected:
+            return False
+        reply = self.send_message(make_info_request("Master", self.server_name))
+        self.server_name = reply.get("payload").get("name")
+        return reply.get("payload")
+
+    def get(self):
         if not self.connected:
             return None
-        return self.send_message("__GET__")
-
+        return self.send_message(
+            make_get_request("Master", self.server_name)
+        )
+    
     def close(self):
         self.socket.close(linger=0)
 
