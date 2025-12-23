@@ -7,7 +7,8 @@ from PyQt6.QtCore import pyqtSignal
 
 # project
 from server_lhc.protocol import (
-    make_ping, make_info_request, make_get_request
+    make_ping, make_info_request, 
+    make_get_request, make_save_request
 )
 
 class MasterClient:
@@ -31,7 +32,8 @@ class MasterClient:
 
         self.last_contact_time = 0.0
         self.enabled = True
-        self.server_name = "Unknown"
+        self.server_name = None
+        self.server_decive = None
 
     def set_connected(self, enabled: bool):
         if self.connected == enabled:
@@ -78,23 +80,58 @@ class MasterClient:
     def ping(self) -> bool:
         if not self.connected:
             return False
+
         reply = self.send_message(make_ping("Master", self.server_name))
-        return reply.get("payload").get("PING") == "PONG"
+
+        if not self._is_valid_reply(reply):
+            return False
+
+        return reply.get("payload", {}).get("PING") == "PONG"
+
 
     def info(self):
         if not self.connected:
-            return False
+            return None
+
         reply = self.send_message(make_info_request("Master", self.server_name))
-        self.server_name = reply.get("payload").get("name")
-        return reply.get("payload")
+
+        if not self._is_valid_reply(reply):
+            return None
+
+        payload = reply.get("payload", {})
+        self.server_name = payload.get("name")
+        self.server_decive = payload.get("device")
+
+        return payload
+
 
     def get(self):
         if not self.connected:
             return None
-        return self.send_message(
+
+        reply = self.send_message(
             make_get_request("Master", self.server_name)
         )
+
+        if not self._is_valid_reply(reply):
+            return None
+
+        return reply
+
     
+    def save(self, new_path: str):
+        if not self.connected:
+            return None
+
+        reply = self.send_message(
+            make_save_request("Master", self.server_name, path=new_path)
+        )
+
+        if not self._is_valid_reply(reply):
+            return None
+
+        return reply
+
     def close(self):
         self.socket.close(linger=0)
 
@@ -119,3 +156,10 @@ class MasterClient:
         self.socket.setsockopt(zmq.RCVTIMEO, 2000)
         self.socket.setsockopt(zmq.SNDTIMEO, 2000)
         self.socket.connect(self.address)
+    
+    def _is_valid_reply(self, reply: dict | None) -> bool:
+        if reply is None:
+            return False
+        if reply.get("error_msg") is not None:
+            return False
+        return True

@@ -4,14 +4,14 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-class PathBar(QWidget):
+class SaveBar(QWidget):
     '''
     Class made to define a QWidget used to group every elements of the saving path.
     The Entry contain the path where the data will be stored.
     '''
     def __init__(self, path: str | None = None):
         '''
-        Initialization of the PathBar class.
+        Initialization of the SaveBar class.
         
             Arg:
                 path: (str, optional)
@@ -48,9 +48,10 @@ class PathBar(QWidget):
 
         if path is not None:        # if there is an initial path
              self.set_path(path)    # set the entry
+
     
     @property
-    def path_to_save(self) -> str:
+    def saving_path(self) -> str:
         '''
         Helper to access to the path where the data should be saved.
         '''

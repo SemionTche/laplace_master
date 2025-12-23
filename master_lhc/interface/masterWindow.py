@@ -17,7 +17,7 @@ from server_lhc.protocol import (
 # project
 from interface.connectionPanel import ConnectionPanel
 from interface.optimizationPanel import OptimizationPanel
-from interface.pathBar import PathBar
+from interface.saveBar import SaveBar
 from interface.serverBar import ServerBar
 from client.clientManager import ClientManager
 
@@ -52,11 +52,11 @@ class MasterWindow(QMainWindow):
 
 
     @property
-    def path_to_save(self) -> str:
+    def saving_path(self) -> str:
         '''
         Property made to have a conveniant access to the saving path.
         '''
-        return self.path_bar.path_to_save
+        return self.save_bar.saving_path
 
 
     def set_up(self) -> None:
@@ -80,16 +80,16 @@ class MasterWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        ### top line (pathBar and serverBar)
+        ### top line (saveBar and serverBar)
         top_container = QHBoxLayout()
         main_layout.addLayout(top_container)
 
             # pathBar
         saved_path = self.settings.value("interface/path_saving_entry", defaultValue="", type=str)
-        self.path_bar = PathBar(saved_path)
+        self.save_bar = SaveBar(saved_path)
 
         # top_container.addStretch(3)          # add space
-        top_container.addWidget(self.path_bar)
+        top_container.addWidget(self.save_bar)
         # top_container.addStretch(2)
 
             # serverBar
@@ -132,8 +132,12 @@ class MasterWindow(QMainWindow):
         Defines all the signals between the clients and the interface.
         '''
         # update the 'config.ini' file when the 'path saving entry' is modified
-        self.path_bar.save_entry.textChanged.connect(
+        self.save_bar.save_entry.textChanged.connect(
             lambda text: self.settings.setValue("interface/path_saving_entry", text)
+        )
+
+        self.save_bar.save_entry.textChanged.connect(
+            self.client_manager.save_all
         )
 
         # when a server address is given, use the route procedure
@@ -199,7 +203,7 @@ class MasterWindow(QMainWindow):
                     format, using REQ.
         '''
         # probe the server to gather informations
-        info = self.client_manager.probe_server(address)
+        info = self.client_manager.probe_server(address, self.saving_path)
         
         # if there is no information (an error was raised)
         if info is None:
