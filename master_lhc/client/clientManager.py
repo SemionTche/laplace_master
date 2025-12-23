@@ -1,4 +1,3 @@
-import json
 from PyQt6.QtCore import QObject, pyqtSignal
 from client.masterClient import MasterClient
 
@@ -25,7 +24,7 @@ class ClientManager(QObject):
         super().__init__()
         self.clients: dict[str, MasterClient] = {}
 
-    def probe_server(self, address: str) -> ServerInfo | None:
+    def probe_server(self, address: str, saving_path: str) -> ServerInfo | None:
         try:
             client = MasterClient(address)
         except ValueError:
@@ -37,17 +36,22 @@ class ClientManager(QObject):
         if not alive:
             client.close()
             return ServerInfo(address=address, alive=False, name=None, device=None, freedom=0)
+        
+        client.save(saving_path)
 
         # Only request name/device if alive
         info = client.info()
-        name = info.get("name")
-        device = info.get("device")
-        freedom = info.get("freedom")
-        try:
-            freedom = int(freedom)
-        except (TypeError, ValueError):
-            freedom = 0
-        return ServerInfo(address=address, alive=True, name=name, device=device, freedom=freedom)
+        if info is not None:
+            name = info.get("name")
+            device = info.get("device")
+            freedom = info.get("freedom")
+            try:
+                freedom = int(freedom)
+            except (TypeError, ValueError):
+                freedom = 0
+            return ServerInfo(address=address, alive=True, name=name, device=device, freedom=freedom)
+        
+        return ServerInfo(address=address, alive=False, name=None, device=None, freedom=0)
 
     def remove_server(self, address: str):
         client = self.clients.pop(address, None)
@@ -75,6 +79,12 @@ class ClientManager(QObject):
                 print(f"data = {data}")
                 self.server_data_received.emit(address, data)
 
+    def save_all(self, new_path: str):
+        print(f"the new path is: {new_path}")
+        for address, client in self.clients.items():
+            if not client.connected:
+                continue
+            client.save(new_path)
 
     def close_all(self):
         for client in self.clients.values():
