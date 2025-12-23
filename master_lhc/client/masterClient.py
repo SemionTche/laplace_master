@@ -7,8 +7,8 @@ from PyQt6.QtCore import pyqtSignal
 
 # project
 from server_lhc.protocol import (
-    CMD_INFO, CMD_PING, CMD_GET, CMD_SAVE, CMD_STOP,
-    make_info_request, make_ping, make_message
+    CMD_INFO, CMD_PING, CMD_GET,
+    make_ping, make_info_request, make_get_request
 )
 
 class MasterClient:
@@ -87,54 +87,56 @@ class MasterClient:
         reply = self.send_message(make_info_request("Master", "unknown"))
         return reply.get("payload")
 
-    def get(self) -> str | None:
+    def get(self):
         if not self.connected:
             return None
-        message = self.making_get()
-        return self.send_message(message)
+        return self.send_message(
+            make_get_request("Master", "unknown")
+        )
 
-    def making_ping(self):
-        message = {
-            "from": "Master",
-            "to": "unknown",
-            "cmd": "PING",
-            "payload": {"PING": None},
-            "version": "1.0",
-            "error_msg": None,
-            "msg": "Alive?"
-        }
-        return message
 
-    def making_info(self):
-        message = {
-            "from": "Master",
-            "to" : "unknown",
-            "cmd": "INFO",
-            "payload": {
-                "device": None,
-                "freedom": 0,
-                "name": None,
-                "capabilities": None
-            },
-            "version": "1.0",
-            "msg": "Informations required.",
-            "error_msg": None
-        }
-        return message
+    # def making_ping(self):
+    #     message = {
+    #         "from": "Master",
+    #         "to": "unknown",
+    #         "cmd": "PING",
+    #         "payload": {"PING": None},
+    #         "version": "1.0",
+    #         "error_msg": None,
+    #         "msg": "Alive?"
+    #     }
+    #     return message
 
-    def making_get(self):
-        message = {
-            "from": "Master",
-            "to": "unknown",
-            "cmd": "GET",
-            "payload": {
-                "data": None
-            },
-            "version": "1.0",
-            "msg": "Get values.",
-            "error_msg": None
-        }
-        return message
+    # def making_info(self):
+    #     message = {
+    #         "from": "Master",
+    #         "to" : "unknown",
+    #         "cmd": "INFO",
+    #         "payload": {
+    #             "device": None,
+    #             "freedom": 0,
+    #             "name": None,
+    #             "capabilities": None
+    #         },
+    #         "version": "1.0",
+    #         "msg": "Informations required.",
+    #         "error_msg": None
+    #     }
+    #     return message
+
+    # def making_get(self):
+    #     message = {
+    #         "from": "Master",
+    #         "to": "unknown",
+    #         "cmd": "GET",
+    #         "payload": {
+    #             "data": None
+    #         },
+    #         "version": "1.0",
+    #         "msg": "Get values.",
+    #         "error_msg": None
+    #     }
+    #     return message
     
     def close(self):
         self.socket.close(linger=0)
