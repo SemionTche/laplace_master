@@ -9,6 +9,11 @@ from PyQt6.QtGui import QIcon
 import pathlib
 import qdarkstyle
 
+from server_lhc.protocol import (
+    CMD_INFO, CMD_PING, CMD_GET, CMD_SAVE, CMD_STOP,
+    DEVICE_MOTOR, DEVICE_CAMERA, DEVICE_GAS, DEVICE_OPT
+)
+
 # project
 from interface.connectionPanel import ConnectionPanel
 from interface.optimizationPanel import OptimizationPanel
@@ -213,7 +218,7 @@ class MasterWindow(QMainWindow):
             return                 # get out of the routing session
 
         # if the device is a camera
-        if info.device == "CAMERA":
+        if info.device == DEVICE_CAMERA:
             # top right connectionPanel
             self.diagsConnectionPanel.add_server(
                 address=info.address,
@@ -221,7 +226,7 @@ class MasterWindow(QMainWindow):
             )
         
         # elif the device is an 'operating system'
-        elif info.device == "MOTOR" or info.device == "GAS":
+        elif info.device == DEVICE_MOTOR or info.device == DEVICE_GAS:
             # bottom left connectionPanel
             self.motorsConnectionPanel.add_server(
                 address=info.address,
@@ -234,7 +239,7 @@ class MasterWindow(QMainWindow):
                     info.freedom
                 )
         
-        elif info.device == "OPT":
+        elif info.device == DEVICE_OPT:
             self.optimizationPanel.add_server(
                 address=info.address,
                 name=info.name or "Optimization"
