@@ -213,7 +213,7 @@ class MasterWindow(QMainWindow):
             return                 # get out of the routing session
 
         # if the device is a camera
-        if info.device == "__CAMERA__":
+        if info.device == "CAMERA":
             # top right connectionPanel
             self.diagsConnectionPanel.add_server(
                 address=info.address,
@@ -221,7 +221,7 @@ class MasterWindow(QMainWindow):
             )
         
         # elif the device is an 'operating system'
-        elif info.device == "__MOTORS__" or info.device == "__GAS__":
+        elif info.device == "MOTOR" or info.device == "GAS":
             # bottom left connectionPanel
             self.motorsConnectionPanel.add_server(
                 address=info.address,
@@ -234,7 +234,7 @@ class MasterWindow(QMainWindow):
                     info.freedom
                 )
         
-        elif info.device == "__OPT__":
+        elif info.device == "OPT":
             self.optimizationPanel.add_server(
                 address=info.address,
                 name=info.name or "Optimization"

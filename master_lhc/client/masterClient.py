@@ -50,12 +50,12 @@ class MasterClient:
             except Exception:
                 pass
 
-    def send_message(self, message: str) -> str | None:
+    def send_message(self, message: dict) -> str | None:
         if not self.connected:
             return None
         try:
-            self.socket.send_string(message)
-            reply = self.socket.recv_string()
+            self.socket.send_json(message)
+            reply = self.socket.recv_json()
             self.last_contact_time = time.time()
             
             # emit signal through client manager (optional, see note below)
@@ -72,14 +72,66 @@ class MasterClient:
     def ping(self) -> bool:
         if not self.connected:
             return False
-        reply = self.send_message("__PING__")
-        return reply == "__PONG__"
+        message = self.making_ping()
+        reply = self.send_message(message)
+        return reply.get("payload").get("PING") == "PONG"
+
+    def info(self):
+        if not self.connected:
+            return False
+        message = self.making_info()
+        reply = self.send_message(message)
+        return reply.get("payload")
 
     def get(self) -> str | None:
         if not self.connected:
             return None
-        return self.send_message("__GET__")
+        message = self.making_get()
+        return self.send_message(message)
 
+    def making_ping(self):
+        message = {
+            "from": "Master",
+            "to": "unknown",
+            "cmd": "PING",
+            "payload": {"PING": None},
+            "version": "1.0",
+            "error_msg": None,
+            "msg": "Alive?"
+        }
+        return message
+
+    def making_info(self):
+        message = {
+            "from": "Master",
+            "to" : "unknown",
+            "cmd": "INFO",
+            "payload": {
+                "device": None,
+                "freedom": 0,
+                "name": None,
+                "capabilities": None
+            },
+            "version": "1.0",
+            "msg": "Informations required.",
+            "error_msg": None
+        }
+        return message
+
+    def making_get(self):
+        message = {
+            "from": "Master",
+            "to": "unknown",
+            "cmd": "GET",
+            "payload": {
+                "data": None
+            },
+            "version": "1.0",
+            "msg": "Get values.",
+            "error_msg": None
+        }
+        return message
+    
     def close(self):
         self.socket.close(linger=0)
 

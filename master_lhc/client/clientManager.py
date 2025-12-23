@@ -1,7 +1,6 @@
-import time
 import json
 from PyQt6.QtCore import QObject, pyqtSignal
-from .masterClient import MasterClient
+from client.masterClient import MasterClient
 
 
 from dataclasses import dataclass
@@ -40,9 +39,10 @@ class ClientManager(QObject):
             return ServerInfo(address=address, alive=False, name=None, device=None, freedom=0)
 
         # Only request name/device if alive
-        name = client.send_message("__NAME__")
-        device = client.send_message("__DEVICE__")
-        freedom = client.send_message("__FREEDOM__")
+        info = client.info()
+        name = info.get("name")
+        device = info.get("device")
+        freedom = info.get("freedom")
         try:
             freedom = int(freedom)
         except (TypeError, ValueError):
@@ -70,7 +70,7 @@ class ClientManager(QObject):
             data = client.get()
             if data is not None:
                 print(f"[GET] {address}: {data}")
-                data = json.loads(data)
+                data = data.get("payload").get("data")
                 print(f"type = {type(data)}")
                 print(f"data = {data}")
                 self.server_data_received.emit(address, data)
