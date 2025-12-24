@@ -75,8 +75,6 @@ class ClientManager(QObject):
             if data is not None:
                 print(f"[GET] {address}: {data}")
                 data = data.get("payload").get("data")
-                print(f"type = {type(data)}")
-                print(f"data = {data}")
                 self.server_data_received.emit(address, data)
 
     def save_all(self, new_path: str):

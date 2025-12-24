@@ -159,6 +159,9 @@ class MasterWindow(QMainWindow):
         self.motorsConnectionPanel.server_connection_changed.connect(
             lambda addr, state: self.client_manager.set_server_enabled(addr, state)
         )
+        self.optimizationPanel.server_connection_changed.connect(
+            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        )
 
         self.client_manager.server_contacted.connect(
             self.diagsConnectionPanel.update_server_last_msg
@@ -178,12 +181,12 @@ class MasterWindow(QMainWindow):
         self.client_manager.server_pinged.connect(
             self.motorsConnectionPanel.on_server_alive_changed
         )
-        self.client_manager.server_data_received.connect(
-            self.motorsConnectionPanel.update_server_data
+        self.client_manager.server_pinged.connect(
+            self.optimizationPanel.on_server_alive_changed
         )
 
-        self.optimizationPanel.server_connection_changed.connect(
-            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        self.client_manager.server_data_received.connect(
+            self.motorsConnectionPanel.update_server_data
         )
 
         self.optimizationPanel.motor_control_changed.connect(

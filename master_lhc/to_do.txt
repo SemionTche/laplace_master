@@ -1,0 +1,14 @@
+1) in master window / serverBar:
+    should not be possible to enter several times the same address
+
+2) optimization panel:
+    currently if the server shut down, impossible to reconnect from master
+    -> I think it is because I had one server on, so it prevent the other one
+    to change of state. I would be better if it changed the state of the turn on
+    one in order to change the state of the turn off that we want turn on.
+
+3) optimization panel:
+    a maximum of one opt server should be able to be turn on at the same time.
+    "Connect / Disconnect" and adding a server should include this elements
+    (adding is always on, so the other server should be turn off, selecting servers
+    with the button should set all the other server to disconnect)

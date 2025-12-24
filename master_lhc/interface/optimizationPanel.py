@@ -147,3 +147,14 @@ class OptimizationPanel(QWidget):
         widget = self.server_widgets.get(address)
         if widget:
             widget.update_last_msg()
+
+    def on_server_alive_changed(self, address: str, alive: bool) -> None:
+        '''
+        Indicate if a server stops answering.
+        '''
+        widget = self.server_widgets.get(address)
+        if not widget:
+            return
+
+        if not alive and widget.connected:
+            widget.toggle_connection_state()
