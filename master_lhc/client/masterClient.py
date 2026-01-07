@@ -1,9 +1,6 @@
-# client/masterClient.py
+# libraries
 import zmq
-import threading
 import time
-
-from PyQt6.QtCore import pyqtSignal
 
 # project
 from server_lhc.protocol import (
@@ -11,21 +8,31 @@ from server_lhc.protocol import (
     make_get_request, make_save_request
 )
 
+
 class MasterClient:
     '''
-    Class made in order to contact a server.
+    Master client class made in order to contact a server.
     '''
     # server_contacted = pyqtSignal(str)  # emits server address when a message is sent
 
     def __init__(self, address: str, timeout_ms: int = 2000):
+        '''
+            Args:
+                address: (str)
+                    the server address.
+
+                timeout_ms: (int)
+
+        '''
         self.address = address
-        self.context = zmq.Context.instance()
-        self.connected = True
+        self.context = zmq.Context.instance()  # create zmq context
+        self.connected = True                  # flag indicating if the client is running
+        
         try:
-            self.socket = self.context.socket(zmq.REQ)
-            self.socket.setsockopt(zmq.RCVTIMEO, timeout_ms)
+            self.socket = self.context.socket(zmq.REQ)        # create the socket
+            self.socket.setsockopt(zmq.RCVTIMEO, timeout_ms)  # set the timeout
             self.socket.setsockopt(zmq.SNDTIMEO, timeout_ms)
-            self.socket.connect(address)
+            self.socket.connect(address)                      # connect to the address
         
         except zmq.ZMQError as e:
             raise ValueError(f"Invalid server address: {address}") from e
@@ -35,13 +42,13 @@ class MasterClient:
         self.server_name = None
         self.server_decive = None
 
-    def set_connected(self, enabled: bool):
+
+    def set_connected(self, enabled: bool) -> None:
         if self.connected == enabled:
             return  # no change
         self.connected = enabled
 
-        if enabled:
-            # recreate the socket if it was disconnected
+        if enabled:  # recreate the socket if it was disconnected
             try:
                 self.socket.close(linger=0)
             except Exception:
