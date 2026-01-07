@@ -101,9 +101,9 @@ class ConnectionPanel(QWidget):
         widget = ServerItemWidget(address=address, name=name)                   # initialize the new server line
         widget.connection_changed.connect(self.on_server_connection_changed)    # bind the signal
 
-        item.setSizeHint(widget.sizeHint())                 # the size of the line
+        item.setSizeHint(widget.sizeHint())                 # set the size of the item
         self.server_list_widget.addItem(item)               # add the new item
-        self.server_list_widget.setItemWidget(item, widget) # assign widget to row
+        self.server_list_widget.setItemWidget(item, widget) # assign widget to item
 
         self.server_widgets[address] = widget               # store widget
 

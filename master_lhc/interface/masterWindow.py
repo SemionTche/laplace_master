@@ -109,7 +109,7 @@ class MasterWindow(QMainWindow):
         self.diagsConnectionPanel = ConnectionPanel("Diagnostics")
 
             # Bottom-left label
-        self.motorsConnectionPanel = ConnectionPanel("Operating system")
+        self.motorsConnectionPanel = ConnectionPanel("Operating systems")
 
             # Bottom-right label
         self.optimizationPanel = OptimizationPanel()
@@ -236,7 +236,7 @@ class MasterWindow(QMainWindow):
                 name=info.name or "Unknown"
             )
         
-        # elif the device is an 'operating system'
+        # elif the device is an 'operating systems'
         elif info.device == DEVICE_MOTOR or info.device == DEVICE_GAS:
             # bottom left connectionPanel
             self.motorsConnectionPanel.add_server(
