@@ -1,5 +1,7 @@
 # libraries
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit
+from PyQt6.QtWidgets import (
+    QWidget, QHBoxLayout, QLabel, QLineEdit
+)
 from PyQt6.QtCore import pyqtSignal
 
 class ServerBar(QWidget):

@@ -1,7 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
-    QPushButton, QLabel, QGroupBox, QCheckBox
+    QPushButton, QGroupBox, QCheckBox
 )
 from PyQt6.QtCore import pyqtSignal
 

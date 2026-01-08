@@ -1,11 +1,13 @@
+#♦ libraries
 from PyQt6.QtCore import QObject, pyqtSignal
-from client.masterClient import MasterClient
-
-
 from dataclasses import dataclass
+
+# project
+from client.masterClient import MasterClient
 
 @dataclass
 class ServerInfo:
+    '''Class made to define the information received from the server.'''
     address: str
     alive: bool
     name: str | None
@@ -14,6 +16,9 @@ class ServerInfo:
 
 
 class ClientManager(QObject):
+    '''
+    Class made to organize the clients and send messages to the servers.
+    '''
     
     server_pinged = pyqtSignal(str, bool)  # address, alive
     server_contacted = pyqtSignal(str)     # address

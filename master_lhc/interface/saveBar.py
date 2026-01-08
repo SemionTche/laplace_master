@@ -1,6 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
-    QWidget, QLineEdit, QPushButton, QHBoxLayout, QFileDialog, QLabel
+    QWidget, QLineEdit, QPushButton, QHBoxLayout, 
+    QFileDialog, QLabel
 )
 from PyQt6.QtCore import Qt
 

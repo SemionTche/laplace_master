@@ -64,8 +64,6 @@ class ServerControlWidget(QWidget):
         self.unit = QLabel("")
         layout.addWidget(self.unit, stretch=1)
 
-    # --- REQUIRED API ---
-
     def enable_selection(self, enabled: bool):
         self.checkbox.setEnabled(enabled)
         if not enabled:
