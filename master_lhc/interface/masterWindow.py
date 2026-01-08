@@ -109,7 +109,7 @@ class MasterWindow(QMainWindow):
         self.diagsConnectionPanel = ConnectionPanel("Diagnostics")
 
             # Bottom-left label
-        self.motorsConnectionPanel = ConnectionPanel("Operating systems")
+        self.motorsConnectionPanel = ConnectionPanel("Control systems")
 
             # Bottom-right label
         self.optimizationPanel = OptimizationPanel()
