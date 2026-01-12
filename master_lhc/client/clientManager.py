@@ -12,7 +12,7 @@ class ServerInfo:
     device: str | None
     freedom : int
 
-from server_lhc.protocol import make_set_request, DEVICE_OPT
+from server_lhc.protocol import make_set_request, DEVICE_OPT, CMD_OPT
 
 # project
 from client.masterClient import MasterClient
@@ -139,31 +139,31 @@ class ClientManager(QObject):
     #     self._try_execute_next_optimization_command()
 
 
-    def _try_execute_next_optimization_command(self):
-        if not self.is_motor_control:
-            return
+    # def _try_execute_next_optimization_command(self):
+    #     if not self.is_motor_control:
+    #         return
 
-        if not self.optimization_queue:
-            return
+    #     if not self.optimization_queue:
+    #         return
 
-        cmd = self.optimization_queue.popleft()
+    #     cmd = self.optimization_queue.popleft()
 
-        addr = cmd["motor_address"]
+    #     addr = cmd["motor_address"]
 
-        client = self.clients.get(addr)
-        if not client or not client.connected:
-            print(f"[OPT] Motor {addr} not available")
-            return
+    #     client = self.clients.get(addr)
+    #     if not client or not client.connected:
+    #         print(f"[OPT] Motor {addr} not available")
+    #         return
 
-        print(f"[OPT] SET {addr} -> {cmd['positions']}")
+    #     print(f"[OPT] SET {addr} -> {cmd['positions']}")
 
-        client.send_message(
-            make_set_request(
-                sender="Master",
-                target=client.server_name,
-                positions=cmd["positions"]
-            )
-        )
+    #     client.send_message(
+    #         make_set_request(
+    #             sender="Master",
+    #             target=client.server_name,
+    #             positions=cmd["positions"]
+    #         )
+    #     )
 
 
     def _normalize_address(self, address: str) -> str:
@@ -191,7 +191,7 @@ class ClientManager(QObject):
                 )
             )
 
-    def send_set(self, address: str, payload: dict):
+    def send_opt(self, address: str, payload: dict):
         """
         Send a SET command to a server (usually DEVICE_OPT).
 
@@ -203,11 +203,13 @@ class ClientManager(QObject):
         """
         client = self.clients.get(address)
         if not client or not client.connected:
-            print(f"[ClientManager] Cannot send SET to {address}: client not connected")
+            print(f"[ClientManager] Cannot send message to {address}: client not connected")
             return
 
-        print(f"[ClientManager] Sending SET to {address}: {payload}")
+        print(f"[ClientManager] Sending CMD_OPT to {address}: {payload}")
 
-        client.send_message(
-            make_set_request(sender="Master", target=client.server_name, positions=None, payload=payload)
-        )
+        client.opt_update(data=payload)
+
+        # client.send_message(
+        #     make_set_request(sender="Master", target=client.server_name, positions=None, payload=payload)
+        # )

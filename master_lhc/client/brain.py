@@ -123,7 +123,7 @@ class Brain(QObject):
         payload = {"results": self.results}
         print(f"[Brain] Sending final results to {self.opt_address}")
 
-        self.cm.send_set(self.opt_address, payload)
+        self.cm.send_opt(self.opt_address, payload)
 
     def set_motor_control(self, enabled: bool):
         self.motor_control_enabled = enabled
