@@ -20,6 +20,7 @@ from interface.optimizationPanel import OptimizationPanel
 from interface.saveBar import SaveBar
 from interface.serverBar import ServerBar
 from client.clientManager import ClientManager
+from client.brain import Brain
 
 class MasterWindow(QMainWindow):
     '''
@@ -42,6 +43,7 @@ class MasterWindow(QMainWindow):
 
         # Manager handling one client per server
         self.client_manager = ClientManager()
+        self.brain = Brain(self.client_manager)
         
         # Ping timer
         self.timer = QTimer()
@@ -196,10 +198,25 @@ class MasterWindow(QMainWindow):
             self.motorsConnectionPanel.update_server_data
         )
 
+        # self.optimizationPanel.motor_control_changed.connect(
+        #     self.client_manager.set_optimization_motor_control
+        # )
+
         self.optimizationPanel.motor_control_changed.connect(
-            self.client_manager.set_optimization_motor_control
+            self.brain.set_motor_control
         )
 
+        # self.client_manager.server_data_received.connect(
+        #     self.client_manager.handle_opt_data
+        # )
+
+        self.client_manager.server_data_received.connect(
+            self.brain.on_opt_data
+        )
+
+        self.client_manager.server_data_received.connect(
+            self.brain.on_measurement
+        )
 
     def route_server(self, address: str) -> None:
         '''
