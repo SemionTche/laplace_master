@@ -174,22 +174,38 @@ class ClientManager(QObject):
     
     def sample_point(self, inputs: dict):
         """
-        inputs = { address: position }
+        inputs = {
+            address: list[float | None]   # indexed by position_index
+        }
         """
-        for addr, pos in inputs.items():
+        for addr, values in inputs.items():
             addr = self._normalize_address(addr)
             client = self.clients.get(addr)
 
             if not client or not client.connected:
                 continue
 
+            # Build positions payload with explicit indices
+            positions = {}
+
+            for position_index, value in enumerate(values):
+                if value is None:
+                    continue
+
+                positions[position_index] = value
+
+            # Nothing to do for this address
+            if not positions:
+                continue
+
             client.send_message(
                 make_set_request(
                     sender="Master",
                     target=client.server_name,
-                    positions=pos
+                    positions=positions
                 )
             )
+
 
     def send_opt(self, address: str, payload: dict):
         """

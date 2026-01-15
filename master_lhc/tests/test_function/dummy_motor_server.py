@@ -10,7 +10,10 @@ class DummyMotor:
 
     def set_positions(self, positions):
         print(f"[Motor] Moving to {positions}")
-        self.positions = list(map(float, positions))
+        self.positions[0] = positions["0"]
+        self.positions[1] = positions["1"]
+        # self.positions = list(map(float, positions.values()))
+        print(f"here how looks the positions after mapping = {self.positions}")
 
     def get_data(self):
         return {
@@ -33,6 +36,7 @@ if __name__ == "__main__":
 
     # callbacks
     def on_position_changed(positions):
+        print(f"here how looks like positions = {positions}")
         motor.set_positions(positions)
         server.set_data(motor.get_data())
 

@@ -31,9 +31,18 @@ class DummyCamera:
         x1, x2 = self.read_motor_position()
         x1 = torch.tensor(x1)
         x2 = torch.tensor(x2)
+        result = target_function(x1, x2)
+        charge = result[:, 0]
+        energy = result[:, 1]
 
-        y = target_function(x1, x2)
-        return y.squeeze(0).tolist()
+        payload = {
+            "electron_charge": charge.tolist(),
+            "electron_energy_mean": energy.tolist(),
+        }
+
+        print(f"[Camera] Measured {payload}")
+
+        return payload
 
 
 if __name__ == "__main__":
@@ -44,14 +53,14 @@ if __name__ == "__main__":
         address=CAMERA_ADDRESS,
         freedom=2,
         device=DEVICE_CAMERA,
-        data={"value": [0.0, 0.0]},
+        data={},
         name="dummy_camera"
     )
 
     def on_get():
-        value = camera.measure()
-        print(f"[Camera] Measured {value}")
-        server.set_data({"value": value})
+        payload = camera.measure()
+        # print(f"[Camera] Measured {payload}")
+        server.set_data(payload)
 
     server.set_on_get(on_get)
 
