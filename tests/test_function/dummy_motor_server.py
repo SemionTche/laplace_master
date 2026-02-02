@@ -1,6 +1,6 @@
 import time
-from server_lhc.serverLHC import ServerLHC
-from server_lhc.protocol import DEVICE_MOTOR
+from laplace_server.server_lhc import ServerLHC
+from laplace_server.protocol import DEVICE_MOTOR
 
 ADDRESS = "tcp://*:5555"
 
@@ -33,6 +33,7 @@ if __name__ == "__main__":
         data=motor.get_data(),
         name="dummy_motor"
     )
+    print(server.address_for_client)
 
     # callbacks
     def on_position_changed(positions):

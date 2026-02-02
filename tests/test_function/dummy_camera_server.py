@@ -2,8 +2,8 @@ import time
 import zmq
 import torch
 
-from server_lhc.serverLHC import ServerLHC
-from server_lhc.protocol import (
+from laplace_server.server_lhc import ServerLHC
+from laplace_server.protocol import (
     DEVICE_CAMERA,
     make_get_request
 )
@@ -56,6 +56,7 @@ if __name__ == "__main__":
         data={},
         name="dummy_camera"
     )
+    print(server.address_for_client)
 
     def on_get():
         payload = camera.measure()

@@ -9,7 +9,7 @@ from PyQt6.QtGui import QIcon
 import pathlib
 import qdarkstyle
 
-from server_lhc.protocol import (
+from laplace_server.protocol import (
     CMD_INFO, CMD_PING, CMD_GET, CMD_SAVE, CMD_STOP,
     DEVICE_MOTOR, DEVICE_CAMERA, DEVICE_GAS, DEVICE_OPT
 )

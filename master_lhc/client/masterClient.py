@@ -3,7 +3,7 @@ import zmq
 import time
 
 # project
-from server_lhc.protocol import (
+from laplace_server.protocol import (
     make_ping, make_info_request, make_opt_update,
     make_get_request, make_save_request, make_set_request
 )

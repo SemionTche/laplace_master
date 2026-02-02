@@ -1,0 +1,35 @@
+{
+    "saved_date": "2026-01-22",
+    "saved_time": "16:13:58",
+    "exec": {
+        "is_online": false,
+        "is_reading_file": true,
+        "reading_path": "",
+        "saving_path": "C:/Users/APPLI/Documents/GitHub/master_laplace/master_lhc/tests/saving",
+        "server_address": ""
+    },
+    "inputs": {
+        "GasJetHeight": {
+            "__type__": "instance",
+            "class": "inputs.input_gas_jet_height.GasJetHeight",
+            "repr": "<GasJetHeight(name='gas_jet_height', bounds=(0, 10.0), unit='mm', safe_bounds=(-2.0, 10.0), address=147.250.140.65:5555)>"
+        }
+    },
+    "obj": {},
+    "init": {
+        "cls": {
+            "__type__": "class",
+            "module": "initializations.initialization_sobol_sampling",
+            "name": "SobolInitialization"
+        },
+        "params": {
+            "n_samples": 3,
+            "q_candidates": 2,
+            "seed": 0
+        }
+    },
+    "opt": {
+        "enabled": false,
+        "pipeline": {}
+    }
+}

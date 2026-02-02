@@ -12,7 +12,7 @@ class ServerInfo:
     device: str | None
     freedom : int
 
-from server_lhc.protocol import make_set_request, DEVICE_OPT, CMD_OPT
+from laplace_server.protocol import make_set_request, DEVICE_OPT, CMD_OPT
 
 # project
 from client.masterClient import MasterClient

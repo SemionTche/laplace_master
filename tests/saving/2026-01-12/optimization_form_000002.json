@@ -1,0 +1,38 @@
+{
+    "exec": {
+        "is_online": true,
+        "is_reading_file": false,
+        "reading_path": "",
+        "saving_path": "C:/Users/APPLI/Documents/GitHub/master_laplace/master_lhc/tests/saving",
+        "server_address": "tcp://147.250.140.65:1254"
+    },
+    "inputs": {
+        "GasJetHeight": {
+            "__type__": "instance",
+            "class": "inputs.input_gas_jet_height.GasJetHeight",
+            "repr": "<GasJetHeight(name='gas_jet_height', bounds=(0, 15), unit='mm', safe_bounds=(-2.0, 10.0), address=147.250.140.65:5555)>"
+        },
+        "GasJetLongitudinal": {
+            "__type__": "instance",
+            "class": "inputs.input_gas_jet_longitudinal.GasJetLongitudinal",
+            "repr": "<GasJetLongitudinal(name='gas_jet_longitudinal', bounds=(0, 15), unit='mm', safe_bounds=(-2.0, 10.0), address=147.250.140.65:5555)>"
+        }
+    },
+    "obj": {},
+    "init": {
+        "cls": {
+            "__type__": "class",
+            "module": "initializations.initialization_sobol_sampling",
+            "name": "SobolInitialization"
+        },
+        "params": {
+            "n_samples": 3,
+            "q_candidates": 2,
+            "seed": 0
+        }
+    },
+    "opt": {
+        "enabled": false,
+        "pipeline": {}
+    }
+}
