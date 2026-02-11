@@ -1,9 +1,11 @@
 # libraries
+from laplace_log import log
+
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem,
-    QLabel, QGroupBox
+    QWidget, QVBoxLayout, QPushButton, 
+    QListWidget, QListWidgetItem, QGroupBox
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 
 # project
 from interface.serverItemWidget import ServerItemWidget
@@ -63,6 +65,9 @@ class ConnectionPanel(QWidget):
         self.disconnect_button = QPushButton("Connect / Disconnect")
         self.disconnect_button.clicked.connect(self.on_disconnect)
         main_layout.addWidget(self.disconnect_button)
+        
+        log.debug(f"Connection Panel '{title}' loaded.")
+
 
     def update_server_name(self, address: str,
                            newName: str) -> None:
@@ -73,6 +78,7 @@ class ConnectionPanel(QWidget):
         if widget:                                 # if there is a widget
             widget.set_name(newName)               # change the name
 
+
     def update_server_last_msg(self, address: str):
         '''
         Helper to change the last time a message was received.
@@ -80,6 +86,7 @@ class ConnectionPanel(QWidget):
         widget = self.server_widgets.get(address)  # get the widget from the dictionary
         if widget:                                 # if there is a widget
             widget.update_last_msg()               # change the last time a message was received
+
 
     def add_server(self, address: str,
                    name: str = "Unknown") -> None:
@@ -106,6 +113,7 @@ class ConnectionPanel(QWidget):
         self.server_list_widget.setItemWidget(item, widget) # assign widget to item
 
         self.server_widgets[address] = widget               # store widget
+
 
     def add_server_controls(self, address: str,
                             freedom: int) -> None:
@@ -134,6 +142,7 @@ class ConnectionPanel(QWidget):
 
             self.server_control_widgets[address].append(widget)
 
+
     def on_disconnect(self) -> None:
         '''
         Function used when the 'Connect / Disconnect' button is pressed.
@@ -147,6 +156,7 @@ class ConnectionPanel(QWidget):
                 widget.enable_selection(True)
 
         self._replace_buttons()
+
 
     def restore_disconnect_button(self) -> None:
         '''
@@ -162,6 +172,7 @@ class ConnectionPanel(QWidget):
         self.disconnect_button = QPushButton("Connect / Disconnect")
         self.disconnect_button.clicked.connect(self.on_disconnect)
         parent_layout.addWidget(self.disconnect_button)
+
 
     def _replace_buttons(self) -> None:
         '''
@@ -182,6 +193,7 @@ class ConnectionPanel(QWidget):
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.confirm_button)
 
+
     def cancel_selection(self) -> None:
         '''
         Reset configuration after using the 'Cancel' button.
@@ -194,6 +206,7 @@ class ConnectionPanel(QWidget):
                 widget.enable_selection(False)
 
         self.restore_disconnect_button()
+
 
     def confirm_selection(self) -> None:
         '''
@@ -209,6 +222,7 @@ class ConnectionPanel(QWidget):
                 widget.enable_selection(False)
 
         self.restore_disconnect_button()
+
 
     def on_server_connection_changed(self, address: str,
                                      connected: bool) -> None:
@@ -229,6 +243,7 @@ class ConnectionPanel(QWidget):
             if main_widget.connected != widget.connected:
                 widget.toggle_connection_state()
 
+
     def on_server_alive_changed(self, address: str, alive: bool) -> None:
         '''
         Indicate if a server stops answering.
@@ -239,6 +254,7 @@ class ConnectionPanel(QWidget):
 
         if not alive and widget.connected:
             widget.toggle_connection_state()
+
 
     def update_server_data(self, address: str,
                            data: dict) -> None:

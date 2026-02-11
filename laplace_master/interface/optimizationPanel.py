@@ -1,7 +1,10 @@
 # libraries
+from laplace_log import log
+
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
-    QPushButton, QGroupBox, QCheckBox
+    QWidget, QVBoxLayout, QListWidget, 
+    QListWidgetItem, QPushButton, QGroupBox, 
+    QCheckBox
 )
 from PyQt6.QtCore import pyqtSignal
 
@@ -48,6 +51,9 @@ class OptimizationPanel(QWidget):
         self.disconnect_button.clicked.connect(self.on_disconnect)
         self.main_layout.addWidget(self.disconnect_button)
 
+        log.debug("Optimization Panel loaded.")
+
+
     def add_server(self, address: str, name: str):
         '''
         Add a server line in the optimization panel.
@@ -87,6 +93,7 @@ class OptimizationPanel(QWidget):
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.confirm_button)
 
+
     def cancel_selection(self):
         '''
         Cancel selection and restore the connect/disconnect button.
@@ -94,6 +101,7 @@ class OptimizationPanel(QWidget):
         for widget in self.server_widgets.values():
             widget.enable_selection(False)
         self._restore_disconnect_button()
+
 
     def confirm_selection(self):
         '''
@@ -106,6 +114,7 @@ class OptimizationPanel(QWidget):
         self._enforce_single_connection()
         self._restore_disconnect_button()
 
+
     def _restore_disconnect_button(self):
         layout = self.cancel_button.parentWidget().layout()
         self.cancel_button.deleteLater()
@@ -115,6 +124,7 @@ class OptimizationPanel(QWidget):
         self.disconnect_button.clicked.connect(self.on_disconnect)
         layout.addWidget(self.disconnect_button)
 
+
     def _on_server_connection_changed(self, address: str, connected: bool):
         '''
         Emit the signal exactly like ConnectionPanel.
@@ -122,6 +132,7 @@ class OptimizationPanel(QWidget):
         '''
         self.server_connection_changed.emit(address, connected)
         self._enforce_single_connection()
+
 
     def _enforce_single_connection(self):
         '''
@@ -140,6 +151,7 @@ class OptimizationPanel(QWidget):
         if active_server is None:
             self.motor_checkbox.setChecked(False)
 
+
     def update_server_last_msg(self, address: str):
         '''
         Helper to change the last time a message was received from a server.
@@ -147,6 +159,7 @@ class OptimizationPanel(QWidget):
         widget = self.server_widgets.get(address)
         if widget:
             widget.update_last_msg()
+
 
     def on_server_alive_changed(self, address: str, alive: bool) -> None:
         '''

@@ -1,7 +1,9 @@
 # libraries
+from laplace_log import log
+
 from PyQt6.QtWidgets import (
-    QWidget, QLineEdit, QPushButton, QHBoxLayout, 
-    QFileDialog, QLabel
+    QWidget, QLineEdit, QPushButton, 
+    QHBoxLayout, QFileDialog, QLabel
 )
 from PyQt6.QtCore import Qt
 
@@ -58,11 +60,14 @@ class SaveBar(QWidget):
         '''
         return self.save_entry.text().strip()
     
+
     def set_path(self, path: str) -> None:
         '''
         Set the saving entry with the given path.
         '''
+        log.info(f"path changed, new path: {path}")
         self.save_entry.setText(path)
+
 
     def select_save_path(self) -> None:
         '''
@@ -73,4 +78,4 @@ class SaveBar(QWidget):
                                                      "Select directory to save data")
         
         if directory: # if a folder has been choosen
-            self.save_entry.setText(directory)
+            self.set_path(directory)

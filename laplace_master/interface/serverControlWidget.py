@@ -1,9 +1,13 @@
 # libraries
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QCheckBox
+import pathlib
+
+from PyQt6.QtWidgets import (
+    QWidget, QHBoxLayout, 
+    QLabel, QCheckBox
+)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 
-import pathlib
 
 class ServerControlWidget(QWidget):
     '''
@@ -64,13 +68,16 @@ class ServerControlWidget(QWidget):
         self.unit = QLabel("")
         layout.addWidget(self.unit, stretch=1)
 
+
     def enable_selection(self, enabled: bool):
         self.checkbox.setEnabled(enabled)
         if not enabled:
             self.checkbox.setChecked(False)
 
+
     def is_selected(self) -> bool:
         return self.checkbox.isChecked()
+
 
     def toggle_connection_state(self):
         self.connected = not self.connected
@@ -80,6 +87,7 @@ class ServerControlWidget(QWidget):
 
         # placeholder for later networking
         pass
+
 
     def update_positions(self, position: float, unit: str):
         self.value.setText(f"{float(position):.5f}")

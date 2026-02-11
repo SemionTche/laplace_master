@@ -1,6 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QCheckBox
+    QWidget, QHBoxLayout, 
+    QLabel, QCheckBox
 )
 from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon

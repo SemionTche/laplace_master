@@ -1,6 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QLineEdit
+    QWidget, QHBoxLayout, 
+    QLabel, QLineEdit
 )
 from PyQt6.QtCore import pyqtSignal
 
@@ -33,6 +34,7 @@ class ServerBar(QWidget):
 
         # action
         self.server_entry.returnPressed.connect(self._emit_new_server)
+
 
     def _emit_new_server(self) -> None:
         '''
