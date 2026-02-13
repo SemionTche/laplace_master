@@ -206,6 +206,10 @@ class MasterWindow(QMainWindow):
             self.brain.set_motor_control
         )
 
+        self.optimizationPanel.next_queue_clicked.connect(
+            self.brain._next
+        )
+
         # self.client_manager.server_data_received.connect(
         #     self.client_manager.handle_opt_data
         # )

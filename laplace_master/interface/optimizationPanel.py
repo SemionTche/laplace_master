@@ -4,7 +4,7 @@ from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, 
     QListWidgetItem, QPushButton, QGroupBox, 
-    QCheckBox
+    QCheckBox, QHBoxLayout
 )
 from PyQt6.QtCore import pyqtSignal
 
@@ -20,6 +20,7 @@ class OptimizationPanel(QWidget):
     '''
     server_connection_changed = pyqtSignal(str, bool)
     motor_control_changed = pyqtSignal(bool)
+    next_queue_clicked = pyqtSignal(bool)
 
     def __init__(self, title="Optimization"):
         super().__init__()
@@ -40,11 +41,22 @@ class OptimizationPanel(QWidget):
         self.server_list_widget = QListWidget()
         self.main_layout.addWidget(self.server_list_widget)
 
+        # hbox for control system
+        self.hbox = QHBoxLayout()
+
         # Motor control checkbox
         self.motor_checkbox = QCheckBox("Allow optimization to drive motors")
         self.motor_checkbox.setEnabled(False)
         self.motor_checkbox.toggled.connect(self.motor_control_changed)
-        self.main_layout.addWidget(self.motor_checkbox)
+        self.hbox.addWidget(self.motor_checkbox)
+
+        # Next in queue button
+        self.next_queue_button = QPushButton("Next in queue")
+        self.next_queue_button.setEnabled(False)
+        self.next_queue_button.clicked.connect(self.on_next_queue)
+        self.hbox.addWidget(self.next_queue_button)
+
+        self.main_layout.addLayout(self.hbox)
 
         # Connect / Disconnect button
         self.disconnect_button = QPushButton("Connect / Disconnect")
@@ -71,6 +83,13 @@ class OptimizationPanel(QWidget):
 
         # Since a server exists, enable the motor checkbox immediately
         self.motor_checkbox.setEnabled(True)
+        self.next_queue_button.setEnabled(True)
+
+
+    def on_next_queue(self):
+        '''Emit a signal when the 'Next in Queue' button is clicked.'''
+        log.info("Next in queue button clicked.")
+        self.next_queue_clicked.emit(True)
 
 
     def on_disconnect(self):
@@ -148,6 +167,7 @@ class OptimizationPanel(QWidget):
 
         # Update motor checkbox
         self.motor_checkbox.setEnabled(active_server is not None)
+        self.next_queue_button.setEnabled(active_server is not None)
         if active_server is None:
             self.motor_checkbox.setChecked(False)
 

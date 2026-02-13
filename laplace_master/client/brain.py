@@ -67,13 +67,13 @@ class Brain(QObject):
 
 
 
-    def _next(self):
-        if self.waiting or not self.motor_control_enabled:
+    def _next(self, next_in_queue: bool=False):
+        if self.waiting or not (self.motor_control_enabled or next_in_queue):
             return
-
-        if not self.queue:
-            self._send_results()
-            return
+        
+        if not self.queue:              # if there is nothing in the queue
+            self._send_results()        # send the results
+            return                      # get out of the function
 
         self.current = self.queue.popleft()
         self.waiting = True
@@ -85,6 +85,9 @@ class Brain(QObject):
         print(f"[Brain] Current inputs: {self.current['inputs']}")
 
         self.cm.sample_point(self.current["inputs"])
+
+        if not self.queue:          # if the queue is empty
+            self._send_results()    # send results
 
 
     def on_measurement(self, address: str, data: dict):
