@@ -49,15 +49,29 @@ class Brain(QObject):
         obj = data.get("obj")
         if not isinstance(obj, dict):
             raise ValueError("Objective spec must be a dict {address: [objective_names]}")
+        
+        # self.obj_spec_tcp = {}  # keys: tcp://ip:port
+        # self.obj_spec_plain = {}  # keys: ip:port
 
+        # for addr, keys in obj.items():
+        #     full_addr = self.cm._normalize_address(addr)        # tcp://ip:port
+        #     plain_addr = full_addr.split("://", 1)[1]           # ip:port
+
+        #     self.obj_spec_tcp[full_addr] = keys
+        #     self.obj_spec_plain[plain_addr] = keys
+
+        normalized_obj = {}
         for addr, keys in obj.items():
             if not isinstance(keys, list) or not all(isinstance(k, str) for k in keys):
                 raise ValueError(
                     f"Invalid objective spec for {addr}. "
-                    "Expected list[str], got: {keys}"
+                    f"Expected list[str], got: {keys}"
                 )
+            
+            full_addr = self.cm._normalize_address(addr)
+            normalized_obj[full_addr] = keys
 
-        self.obj_spec = obj
+        self.obj_spec = normalized_obj
         # -----------------------------
 
         for sample in data["samples"]:
@@ -79,7 +93,13 @@ class Brain(QObject):
         self.waiting = True
 
         self.current_measurements = {}
+        # obj_addresses = []
+        # for add in self.obj_spec.keys():
+        #     obj_addresses.append(self.cm._normalize_address(add))
+        
         self.expected_sources = set(self.obj_spec.keys())
+        # self.expected_sources = set(self.obj_spec_plain.keys())
+        # self.expected_sources = set(obj_addresses)
 
         print(f"[Brain] Expected objective sources: {self.expected_sources}")
         print(f"[Brain] Current inputs: {self.current['inputs']}")
@@ -97,16 +117,24 @@ class Brain(QObject):
         if address not in self.obj_spec:
             return
 
+        # if address not in self.obj_spec_plain:
+        #     return
+
         # data is already the payload with objective values
         values = data
         if not isinstance(values, dict):
             return
 
+        # if "://" in address:
+        #     address = address.split("://", 1)[1]
+
         # Initialize storage
         self.current_measurements.setdefault(address, {})
 
         expected_keys = self.obj_spec[address]  # now just a list of objective names
-
+        
+        # expected_keys = self.obj_spec_plain[address]
+        
         for k in expected_keys:
             if k in values:
                 self.current_measurements[address][k] = values[k]
@@ -118,7 +146,6 @@ class Brain(QObject):
         # Finalize sample if everything is collected
         if not self.expected_sources:
             self._finalize_current_sample()
-
 
 
     def _finalize_current_sample(self):
@@ -142,10 +169,35 @@ class Brain(QObject):
         if self.opt_address is None:
             return
 
-        payload = {"results": self.results}
-        print(f"[Brain] Sending final results to {self.opt_address}")
+        # payload = {"results": self.results}
+        # print(f"[Brain] Sending final results to {self.opt_address}")
 
+        # self.cm.send_opt(self.opt_address, payload)
+
+        formatted_results = []
+
+        for r in self.results:
+            formatted_outputs = {}
+
+            for addr, values in r["outputs"].items():
+                # Convert tcp://ip:port -> ip:port
+                if "://" in addr:
+                    plain_addr = addr.split("://", 1)[1]
+                else:
+                    plain_addr = addr
+
+                formatted_outputs[plain_addr] = values
+
+            formatted_results.append({
+                "inputs": r["inputs"],
+                "outputs": formatted_outputs,
+                "batch": r["batch"],
+                "candidate": r["candidate"],
+            })
+
+        payload = {"results": formatted_results}
         self.cm.send_opt(self.opt_address, payload)
+
 
     def set_motor_control(self, enabled: bool):
         self.motor_control_enabled = enabled
