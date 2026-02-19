@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 
 # project
-from interface.serverItemWidget import ServerItemWidget
+from interface.widgets import ServerItemWidget
 
 
 class OptimizationPanel(QWidget):

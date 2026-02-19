@@ -37,8 +37,8 @@ class ServerItemWidget(QWidget):
         
         super().__init__() # heritage from QWidget
         
-        p = pathlib.Path(__file__)       # get the path of the file
-        icon_path = p.parent / 'icons'   # path to the icon folder
+        p = pathlib.Path(__file__)              # get the path of the file
+        icon_path = p.parent.parent / 'icons'   # path to the icon folder
 
         # build the check and uncheck icons
         self.connected_icon = QIcon(str(icon_path / 'connected.png'))

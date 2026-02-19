@@ -1,26 +1,27 @@
 # libraries
+import pathlib
+
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QGridLayout,
     QVBoxLayout, QHBoxLayout, QMessageBox
 )
-from PyQt6.QtCore import Qt, QSettings, QTimer
+from PyQt6.QtCore import (
+    Qt, QSettings, QTimer
+)
 from PyQt6.QtGui import QIcon
-
-import pathlib
 import qdarkstyle
-
 from laplace_server.protocol import (
-    CMD_INFO, CMD_PING, CMD_GET, CMD_SAVE, CMD_STOP,
     DEVICE_MOTOR, DEVICE_CAMERA, DEVICE_GAS, DEVICE_OPT
 )
 
 # project
-from interface.connectionPanel import ConnectionPanel
-from interface.optimizationPanel import OptimizationPanel
-from interface.saveBar import SaveBar
-from interface.serverBar import ServerBar
+from interface.panels import ConnectionPanel
+from interface.panels import OptimizationPanel
+from interface.widgets import SaveBar
+from interface.widgets import ServerBar
 from client.clientManager import ClientManager
 from client.brain import Brain
+
 
 class MasterWindow(QMainWindow):
     '''

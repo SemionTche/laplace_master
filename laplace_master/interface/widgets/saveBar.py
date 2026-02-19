@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
+
 class SaveBar(QWidget):
     '''
     Class made to define a QWidget used to group every elements of the saving path.
