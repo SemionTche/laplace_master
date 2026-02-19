@@ -2,8 +2,9 @@
 import pathlib
 
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QLabel, QGridLayout,
-    QVBoxLayout, QHBoxLayout, QMessageBox
+    QMainWindow, QWidget, QLabel, 
+    QGridLayout, QVBoxLayout, QHBoxLayout, 
+    QMessageBox
 )
 from PyQt6.QtCore import (
     Qt, QSettings, QTimer
@@ -11,23 +12,25 @@ from PyQt6.QtCore import (
 from PyQt6.QtGui import QIcon
 import qdarkstyle
 from laplace_server.protocol import (
-    DEVICE_MOTOR, DEVICE_CAMERA, DEVICE_GAS, DEVICE_OPT
+    DEVICE_MOTOR, DEVICE_CAMERA, 
+    DEVICE_GAS, DEVICE_OPT
 )
 
 # project
-from interface.panels import ConnectionPanel
-from interface.panels import OptimizationPanel
-from interface.widgets import SaveBar
-from interface.widgets import ServerBar
+from interface.panels import (
+    ConnectionPanel, OptimizationPanel
+)
+from interface.widgets import (
+    SaveBar, ServerBar
+)
 from client.clientManager import ClientManager
 from client.brain import Brain
 
 
 class MasterWindow(QMainWindow):
     '''
-    Main class of the 'master_lhc' project.
-    Create the main window and connect the interface 
-    and the server configurations. 
+    Main class of the project. Create the main window and 
+    connect the interface and the server configurations. 
     '''
     def __init__(self):
         '''
