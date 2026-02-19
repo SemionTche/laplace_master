@@ -1,6 +1,5 @@
 # libraries
 from laplace_log import log
-
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, 
     QListWidget, QListWidgetItem, QGroupBox
@@ -46,22 +45,21 @@ class ConnectionPanel(QWidget):
         self.server_list_data = []
 
         ### Main layout
-
-        # Main outer layout
+            # Main outer layout
         outer_layout = QVBoxLayout(self)
 
-        # Group box
+            # Group box
         self.group_box = QGroupBox(title)
         outer_layout.addWidget(self.group_box)
 
-        # inside the group box
+            # inside the group box
         main_layout = QVBoxLayout(self.group_box)
 
-        # list container
+            # list container
         self.server_list_widget = QListWidget()
         main_layout.addWidget(self.server_list_widget)
 
-        # connect / disconnect button
+            # connect / disconnect button
         self.disconnect_button = QPushButton("Connect / Disconnect")
         self.disconnect_button.clicked.connect(self.on_disconnect)
         main_layout.addWidget(self.disconnect_button)
@@ -69,7 +67,8 @@ class ConnectionPanel(QWidget):
         log.debug(f"Connection Panel '{title}' loaded.")
 
 
-    def update_server_name(self, address: str,
+    def update_server_name(self, 
+                           address: str,
                            newName: str) -> None:
         '''
         Helper to change the name of the server.
@@ -88,7 +87,8 @@ class ConnectionPanel(QWidget):
             widget.update_last_msg()               # change the last time a message was received
 
 
-    def add_server(self, address: str,
+    def add_server(self, 
+                   address: str,
                    name: str = "Unknown") -> None:
         '''
         Add a server line in the ConnectionPanel.
@@ -224,13 +224,14 @@ class ConnectionPanel(QWidget):
         self.restore_disconnect_button()
 
 
-    def on_server_connection_changed(self, address: str,
+    def on_server_connection_changed(self, 
+                                     address: str,
                                      connected: bool) -> None:
         '''
         Transmit a signal from 'ServerItemWidget' to MasterWindow
         and synchronize ServerControlWidget states.
         '''
-        print(f"[ConnectionPanel {self.title}] emit {address} {connected}")
+        log.info(f"[ConnectionPanel {self.title}] Server connection status changed | address={address} | connected={connected}")
         self.server_connection_changed.emit(address, connected)
 
         list_widgets = self.server_control_widgets.get(address)
@@ -256,7 +257,8 @@ class ConnectionPanel(QWidget):
             widget.toggle_connection_state()
 
 
-    def update_server_data(self, address: str,
+    def update_server_data(self,
+                           address: str,
                            data: dict) -> None:
         '''
         Transmit data to ServerControlWidget.

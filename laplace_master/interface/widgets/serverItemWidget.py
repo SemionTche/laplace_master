@@ -1,4 +1,7 @@
 # libraries
+import pathlib
+
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, 
     QLabel, QCheckBox
@@ -6,7 +9,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon
 
-import pathlib
 
 class ServerItemWidget(QWidget):
     '''
@@ -127,7 +129,6 @@ class ServerItemWidget(QWidget):
 
         # Emit the signal to inform ConnectionPanel, then MasterWindow
         # that a client should be open / close in ClientManager
-        print(f"[ServerItemWidget {self.name}] emit: {self.address} {self.connected}")
         self.connection_changed.emit(self.address, self.connected)
 
 
@@ -140,7 +141,5 @@ class ServerItemWidget(QWidget):
 
 
     def set_name(self, name: str):
-        '''
-        Set the name of the server.
-        '''
+        '''Set the name of the server.'''
         self.name_label.setText(name)

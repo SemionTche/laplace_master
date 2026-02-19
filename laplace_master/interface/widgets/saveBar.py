@@ -66,7 +66,7 @@ class SaveBar(QWidget):
         '''
         Set the saving entry with the given path.
         '''
-        log.info(f"path changed, new path: {path}")
+        log.info(f"Saving path changed, new path: {path}")
         self.save_entry.setText(path)
 
 
