@@ -68,7 +68,8 @@ class Brain(QObject):
                     f"Expected list[str], got: {keys}"
                 )
             
-            full_addr = self.cm._normalize_address(addr)
+            # full_addr = self.cm._normalize_address(addr) here
+            full_addr = addr
             normalized_obj[full_addr] = keys
 
         self.obj_spec = normalized_obj

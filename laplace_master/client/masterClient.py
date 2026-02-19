@@ -2,12 +2,11 @@
 import zmq
 import time
 
-# project
 from laplace_server.protocol import (
     make_ping, make_info_request, make_opt_update,
     make_get_request, make_save_request, make_set_request
 )
-
+from utils.helper_address import normalize_address
 
 class MasterClient:
     '''
@@ -17,14 +16,15 @@ class MasterClient:
 
     def __init__(self, address: str, timeout_ms: int = 2000):
         '''
-            Args:
-                address: (str)
-                    the server address.
+        Args:
+            address: (str)
+                the server address.
 
-                timeout_ms: (int)
+            timeout_ms: (int)
 
         '''
-        self.address = address
+        # self.address = address # normalize_address(address)
+        self.address = normalize_address(address)
         self.context = zmq.Context.instance()  # create zmq context
         self.connected = True                  # flag indicating if the client is running
         
@@ -32,7 +32,7 @@ class MasterClient:
             self.socket = self.context.socket(zmq.REQ)        # create the socket
             self.socket.setsockopt(zmq.RCVTIMEO, timeout_ms)  # set the timeout
             self.socket.setsockopt(zmq.SNDTIMEO, timeout_ms)
-            self.socket.connect(address)                      # connect to the address
+            self.socket.connect(self.address)                      # connect to the address
         
         except zmq.ZMQError as e:
             raise ValueError(f"Invalid server address: {address}") from e
@@ -65,7 +65,7 @@ class MasterClient:
             except Exception:
                 pass
 
-    def send_message(self, message: dict) -> str | None:
+    def send_message(self, message: dict) -> str | dict | None:
         if not self.connected:
             return None
         try:
@@ -112,7 +112,7 @@ class MasterClient:
         return payload
 
 
-    def get(self):
+    def get(self) -> dict | None:
         if not self.connected:
             return None
 
