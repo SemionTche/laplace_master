@@ -15,6 +15,7 @@ from laplace_server.protocol import (
     DEVICE_MOTOR, DEVICE_CAMERA, 
     DEVICE_GAS, DEVICE_OPT
 )
+from laplace_log import log
 
 # project
 from interface.panels import (
@@ -32,6 +33,7 @@ class MasterWindow(QMainWindow):
     Main class of the project. Create the main window and 
     connect the interface and the server configurations. 
     '''
+    
     def __init__(self):
         '''
         Initialization of the 'MasterWindow' class.
@@ -41,17 +43,25 @@ class MasterWindow(QMainWindow):
         self.p = pathlib.Path(__file__)  # current path of the file
         
         # load the settings
-        self.settings = QSettings(str(self.p.parent.parent / "config.ini"), QSettings.Format.IniFormat)
+        self.settings = QSettings(
+            str(self.p.parent.parent / "config.ini"), 
+            QSettings.Format.IniFormat
+        )
 
         self.set_up()  # initialize the widgets and place them in the window
 
         # Manager handling one client per server
         self.client_manager = ClientManager()
+        # Brain organizing the optimizing queue
         self.brain = Brain(self.client_manager)
         
         # Ping timer
         self.timer = QTimer()
-        ping_time_ms = self.settings.value("server/ping_time_ms", defaultValue=3000, type=int)
+        ping_time_ms = self.settings.value(
+            "server/ping_time_ms", 
+            defaultValue=3000, 
+            type=int
+        )
         self.timer.start(ping_time_ms)
         
         self.actions()  # signals
@@ -67,7 +77,8 @@ class MasterWindow(QMainWindow):
 
     def set_up(self) -> None:
         '''
-        Function made to initialize the widgets and to place them in the 'MasterWindow'.
+        Function made to initialize the widgets and 
+        to place them in the 'MasterWindow'.
         '''
         # Set window title, geometry and style
         self.setWindowTitle("Master Window")
@@ -142,25 +153,26 @@ class MasterWindow(QMainWindow):
             lambda text: self.settings.setValue("interface/path_saving_entry", text)
         )
 
+        # send a message to all servers when the saving path is modified
         self.save_bar.save_entry.textChanged.connect(
             self.client_manager.save_all
         )
 
-        # when a server address is given, use the route procedure
+        # when a server address is filled, use the route procedure
         self.server_bar.server_added.connect(self.route_server)
         
-        self.client_manager.server_contacted.connect(
-            self.diagsConnectionPanel.update_server_last_msg
-        )
-        
-        self.client_manager.server_identified.connect(
-            self.diagsConnectionPanel.update_server_name
-        )
-        
+        # ping all servers according to the internal timer
         self.timer.timeout.connect(
             self.client_manager.ping_all
         )
 
+        # set the diag server name
+        self.client_manager.server_identified.connect(
+            self.diagsConnectionPanel.update_server_name
+        )
+        
+        ### every panel actions
+            # update the server state when the interface requires it
         self.diagsConnectionPanel.server_connection_changed.connect(
             lambda addr, state: self.client_manager.set_server_enabled(addr, state)
         )
@@ -170,67 +182,56 @@ class MasterWindow(QMainWindow):
         self.optimizationPanel.server_connection_changed.connect(
             lambda addr, state: self.client_manager.set_server_enabled(addr, state)
         )
-
-        ### update last msg time every panel
+            # update the displaied time when a message is received
         self.client_manager.server_contacted.connect(
             self.diagsConnectionPanel.update_server_last_msg
         )
-
         self.client_manager.server_contacted.connect(
             self.motorsConnectionPanel.update_server_last_msg
         )
-
         self.client_manager.server_contacted.connect(
             self.optimizationPanel.update_server_last_msg
         )
-
-        ### update server state in every panel
+            # update the server state when the client lose connection
         self.client_manager.server_pinged.connect(
             self.diagsConnectionPanel.on_server_alive_changed
         )
-
         self.client_manager.server_pinged.connect(
             self.motorsConnectionPanel.on_server_alive_changed
         )
-
         self.client_manager.server_pinged.connect(
             self.optimizationPanel.on_server_alive_changed
         )
 
-        ### 
+        # when data is received, from motors, update the displaied motor positions
         self.client_manager.server_data_received.connect(
             self.motorsConnectionPanel.update_server_data
         )
 
-        # self.optimizationPanel.motor_control_changed.connect(
-        #     self.client_manager.set_optimization_motor_control
-        # )
-
+        ### brain actions
+            # transmit the motor control state to the brain
         self.optimizationPanel.motor_control_changed.connect(
             self.brain.set_motor_control
         )
-
+            # use the brain next element in queue when button next queue clicked
         self.optimizationPanel.next_queue_clicked.connect(
             self.brain._next
         )
-
-        # self.client_manager.server_data_received.connect(
-        #     self.client_manager.handle_opt_data
-        # )
-
+            # when data is received, from opt, add it in the brain queue
         self.client_manager.server_data_received.connect(
             self.brain.on_opt_data
         )
-
+            # when data is received, from diags, prepare the brain response for the opt 
         self.client_manager.server_data_received.connect(
             self.brain.on_measurement
         )
+
 
     def route_server(self, address: str) -> None:
         '''
         Function called when a new server address is provided.
         Probe the server and use the informations gather to create 
-        the elements in the corresponding 'connectionPanel'.
+        the elements in the corresponding panel.
 
             Errors: message boxes are shown when the address is
             not conform to the ZMQ standards and when the client
@@ -246,19 +247,27 @@ class MasterWindow(QMainWindow):
         
         # if there is no information (an error was raised)
         if info is None:
+            msg = f'The address "{address}" was not found or is invalid.'
+            log.info(msg)
+            
             # create a message box
-            QMessageBox.warning(self, "Invalid address",
-            f'The address "{address}" was not found or is invalid.',
-            QMessageBox.StandardButton.Ok)
-            return                  # get out of the routing session
+            QMessageBox.warning(
+                self, "Invalid address", msg,
+                QMessageBox.StandardButton.Ok
+            )
+            return  # get out of the routing session
 
         # if the client did get not answer
         if not info.alive:
+            msg = f'The server "{address}" did not respond.'
+            log.info(msg)
+            
             # create a message box
-            QMessageBox.warning(self, "Server unreachable",
-            f'The server "{address}" did not respond.',
-            QMessageBox.StandardButton.Ok)
-            return                 # get out of the routing session
+            QMessageBox.warning(
+                self, "Server unreachable", msg,
+                QMessageBox.StandardButton.Ok
+            )
+            return  # get out of the routing session
 
         # if the device is a camera
         if info.device == DEVICE_CAMERA:
@@ -267,8 +276,10 @@ class MasterWindow(QMainWindow):
                 address=info.address,
                 name=info.name or "Unknown"
             )
+            log.info(f"New diagnostic server added:\n"
+                     f"name={info.name or "Unknown"}, address={info.address}")
         
-        # elif the device is an 'operating systems'
+        # elif the device is a 'control system'
         elif info.device == DEVICE_MOTOR or info.device == DEVICE_GAS:
             # bottom left connectionPanel
             self.motorsConnectionPanel.add_server(
@@ -281,12 +292,16 @@ class MasterWindow(QMainWindow):
                     info.address,
                     info.freedom
                 )
+            log.info(f"New control system server added:\n"
+                     f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
         
         elif info.device == DEVICE_OPT:
             self.optimizationPanel.add_server(
                 address=info.address,
                 name=info.name or "Optimization"
             )
+            log.info(f"New optimization server added:\n"
+                     f"name={info.name or "Unknown"}, address={info.address}")
 
 
     def closeEvent(self, event) -> None:
