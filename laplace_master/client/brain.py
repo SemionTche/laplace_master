@@ -1,140 +1,172 @@
+# libraries
 from PyQt6.QtCore import QObject
-from collections import deque
+from laplace_log import log
 
+# project
 from client.clientManager import ClientManager
+from utils.json_encoder import json_style
 
-from PyQt6.QtCore import QObject
-from collections import deque
 
 class Brain(QObject):
-    """
-    Optimization controller.
-    Owns the optimization loop and measured data.
-    """
+    '''
+    Central controller of the optimization workflow.
 
-    def __init__(self, client_manager):
-        super().__init__()
-        self.cm: ClientManager = client_manager
+    The Brain coordinates optimization suggestions, motor commands,
+    and diagnostic measurements. It manages the evaluation queue,
+    synchronizes measurements from multiple sources, and returns
+    aggregated results to the optimization server.
+    '''
 
-        # FIFO queue of samples to evaluate
-        self.queue = deque()
+    def __init__(self, client_manager: ClientManager):
+        '''
+        Initialize the Brain.
 
-        # Collected results
-        self.results = []
+        Arg:
+            client_manager: (ClientManager)
+                Communication interface used to interact with control,
+                diagnostic, and optimization servers.
+        '''
+        super().__init__()  # heritage from QObject
+        
+        self.client_manager = client_manager
 
-        # Currently evaluated sample
-        self.current = None
+        self.motor_control_enabled = False  # the right to move motors
+        
+        self.suggestions = []  # candidates suggested by the optimizer
+        self.results = []      # collected results from the diagnostics
 
-        # True while waiting for a measurement
-        self.waiting = False
+        self.current = None   # Currently evaluated sample
+        self.waiting = False  # True while waiting for a measurement
 
-        # Address of the OPT server (set dynamically)
-        self.opt_address = None
+        self.opt_address = "Unknown"  # Address of the OPT server
 
-        self.motor_control_enabled = False
+        log.info("Brain loaded.")
 
 
-    def on_opt_data(self, opt_address: str, data: dict):
+    def on_opt_data(self, 
+                    opt_address: str, 
+                    data: dict) -> None:
+        '''
+        Handle incoming data from the optimization server.
+
+        Resets the current state, stores the objective specification,
+        loads new suggested samples into the queue, and starts the
+        evaluation process if possible.
+
+        Args:
+            opt_address: (str)
+                Address of the optimization server.
+            
+            data: (dict)
+                Payload containing objective specification and samples.
+        '''
+        # if the received data is not an initialization or optimization suggestion
         if not (data.get("is_init") or data.get("is_opt")):
-            return
+            return      # ignore it
 
-        self.queue.clear()
+        # reset the attributes
+        self.suggestions.clear()
         self.results.clear()
         self.current = None
         self.waiting = False
+        log.info("The Brain suggestions were cleared.")
 
-        self.opt_address = opt_address
+        # log.info("New optimization data received:\n"
+        #         f"{json_style(data)}")
 
-        # --- STRICT objective spec ---
-        obj = data.get("obj")
-        if not isinstance(obj, dict):
-            raise ValueError("Objective spec must be a dict {address: [objective_names]}")
-        
-        # self.obj_spec_tcp = {}  # keys: tcp://ip:port
-        # self.obj_spec_plain = {}  # keys: ip:port
-
-        # for addr, keys in obj.items():
-        #     full_addr = self.cm._normalize_address(addr)        # tcp://ip:port
-        #     plain_addr = full_addr.split("://", 1)[1]           # ip:port
-
-        #     self.obj_spec_tcp[full_addr] = keys
-        #     self.obj_spec_plain[plain_addr] = keys
+        self.opt_address = opt_address     # get the optimizer address
+        obj: dict = data.get("obj", {})    # get the objective list of keys along each objective address
 
         normalized_obj = {}
+        # verifie que le dictionnaire contient des listes et que ces listes contienent des strings
         for addr, keys in obj.items():
             if not isinstance(keys, list) or not all(isinstance(k, str) for k in keys):
                 raise ValueError(
                     f"Invalid objective spec for {addr}. "
                     f"Expected list[str], got: {keys}"
                 )
-            
-            # full_addr = self.cm._normalize_address(addr) here
-            full_addr = addr
-            normalized_obj[full_addr] = keys
+            normalized_obj[addr] = keys
 
         self.obj_spec = normalized_obj
-        # -----------------------------
 
+        # add samples to the suggestions
         for sample in data["samples"]:
-            self.queue.append(sample)
+            self.suggestions.append(sample)
+        
+        log.info("New optimization suggestions added:\n"
+                 f"{json_style(self.suggestions)}")
+        
+        self._next()  # provide the next point to the control system
 
-        self._next()
 
+    def _next(self, next_in_queue: bool=False) -> None:
+        '''
+        Start evaluation of the next suggested sample if allowed.
 
+        A new sample is triggered only if the system is not already
+        waiting for measurements and motor control is enabled
+        (or explicitly forced via `next_in_queue`).
+        '''
+        # if we are waiting for a measure 
+        if self.waiting:
+            return         # don't look for the next suggestion
+        
 
-    def _next(self, next_in_queue: bool=False):
-        if self.waiting or not (self.motor_control_enabled or next_in_queue):
+        # Do not proceed if motors are not enabled
+        # unless we explicitly ask for an element in the suggestions
+        if not (self.motor_control_enabled or next_in_queue):
             return
         
-        if not self.queue:              # if there is nothing in the queue
-            self._send_results()        # send the results
-            return                      # get out of the function
+        if not self.suggestions:                        # if there is no suggestion
+            log.info("No suggestion available.")        # send the results
+            return                                      # get out of the function
 
-        self.current = self.queue.popleft()
-        self.waiting = True
+        self.current = self.suggestions.pop(0)  # get the current point to sample and pop it from the suggestions
+        self.waiting = True                     # we start to wait for a measure
 
-        self.current_measurements = {}
-        # obj_addresses = []
-        # for add in self.obj_spec.keys():
-        #     obj_addresses.append(self.cm._normalize_address(add))
-        
+        self.current_measurements = {}          # gather the measures
         self.expected_sources = set(self.obj_spec.keys())
-        # self.expected_sources = set(self.obj_spec_plain.keys())
-        # self.expected_sources = set(obj_addresses)
 
-        print(f"[Brain] Expected objective sources: {self.expected_sources}")
-        print(f"[Brain] Current inputs: {self.current['inputs']}")
+        log.info("Measuring inputs:\n"
+                 f"{json_style(self.current['inputs'])}")
 
-        self.cm.sample_point(self.current["inputs"])
+        self.client_manager.sample_point(self.current["inputs"])  # send the imputs to control system servers
 
-        if not self.queue:          # if the queue is empty
-            self._send_results()    # send results
+        # if not self.suggestions:    # if there is no suggestion
+        #     self._send_results()    # send results
 
 
-    def on_measurement(self, address: str, data: dict):
-        if not self.waiting:
-            return
+    def on_measurement(self, 
+                       address: str, 
+                       data: dict) -> None:
+        '''
+        Process a measurement received from a diagnostic server.
 
-        if address not in self.obj_spec:
-            return
+        Measurements are collected until all expected sources have
+        responded for the current sample. Once complete, the sample
+        is finalized.
 
-        # if address not in self.obj_spec_plain:
-        #     return
+        Args:
+            address: (str)
+                Address of the diagnostic server.
+            
+            data: (dict)
+                Measured values for the current sample.
+        '''
+        if not self.waiting:               # if we are not waiting for a measure
+            return                         # we do not continue
 
-        # data is already the payload with objective values
+        if address not in self.obj_spec:   # if a measure is received from an unexpected address
+            return                         # ignore it
+
         values = data
         if not isinstance(values, dict):
             return
 
-        # if "://" in address:
-        #     address = address.split("://", 1)[1]
-
         # Initialize storage
-        self.current_measurements.setdefault(address, {})
+        self.current_measurements.setdefault(address, {})  # create a key with empty dict in current_measurements
 
         expected_keys = self.obj_spec[address]  # now just a list of objective names
-        
-        # expected_keys = self.obj_spec_plain[address]
         
         for k in expected_keys:
             if k in values:
@@ -149,7 +181,17 @@ class Brain(QObject):
             self._finalize_current_sample()
 
 
-    def _finalize_current_sample(self):
+    def _finalize_current_sample(self) -> None:
+        '''
+        Finalize the current sample once all measurements are collected.
+
+        The aggregated inputs and outputs are stored. If additional
+        suggestions remain, evaluation continues; otherwise results
+        are sent back to the optimizer.
+        '''
+        if not isinstance(self.current, dict):
+            return
+        
         self.results.append({
             "inputs": self.current["inputs"],
             "outputs": self.current_measurements,
@@ -159,49 +201,42 @@ class Brain(QObject):
 
         self.current = None
         self.waiting = False
-        self._next()
+        # self._next()
+
+        if self.suggestions:
+            self._next()
+        else:
+            self._send_results()  # Batch finished
 
 
-
-    def _send_results(self):
-        """
-        Send all collected results back to OPT server.
-        """
+    def _send_results(self) -> None:
+        '''
+        Send collected batch results to the optimization server.
+        '''
         if self.opt_address is None:
             return
 
-        # payload = {"results": self.results}
-        # print(f"[Brain] Sending final results to {self.opt_address}")
+        if self.results:
+            payload = {"results": self.results}
+            log.info(f"Sending results to optimizer: {self.opt_address}\n"
+                    f"{json_style(payload)}")
 
-        # self.cm.send_opt(self.opt_address, payload)
-
-        formatted_results = []
-
-        for r in self.results:
-            formatted_outputs = {}
-
-            for addr, values in r["outputs"].items():
-                # Convert tcp://ip:port -> ip:port
-                if "://" in addr:
-                    plain_addr = addr.split("://", 1)[1]
-                else:
-                    plain_addr = addr
-
-                formatted_outputs[plain_addr] = values
-
-            formatted_results.append({
-                "inputs": r["inputs"],
-                "outputs": formatted_outputs,
-                "batch": r["batch"],
-                "candidate": r["candidate"],
-            })
-
-        payload = {"results": formatted_results}
-        self.cm.send_opt(self.opt_address, payload)
+            self.client_manager.send_opt(self.opt_address, payload)
 
 
-    def set_motor_control(self, enabled: bool):
+    def set_motor_control(self, enabled: bool) -> None:
+        '''
+        Enable or disable motor control.
+
+        When enabling control, the next queued sample is triggered
+        if available.
+
+        Arg:
+            enabled : bool
+                Whether motor movement is allowed.
+        '''
+        # set the motor control
         self.motor_control_enabled = enabled
-        # try to continue if there is a pending queue
-        if enabled:
-            self._next()
+        
+        if enabled:         # if motors can be drive
+            self._next()    # get the next sample

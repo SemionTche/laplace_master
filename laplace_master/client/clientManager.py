@@ -27,7 +27,7 @@ class ClientManager(QObject):
     server_pinged = pyqtSignal(str, bool)           # address, alive
     server_contacted = pyqtSignal(str)              # address
     server_identified = pyqtSignal(str, str)        # address, name
-    server_data_received = pyqtSignal(str, dict)    # address, raw data
+    server_data_received = pyqtSignal(str, dict, str)    # address, raw data
 
     def __init__(self):
         '''
@@ -91,11 +91,11 @@ class ClientManager(QObject):
 
         # get the server informations
         info_dict = client.info()
-        if info_dict is not None:               # if the server responded
-            name = info_dict.get("name")        # get the name
-            device = info_dict.get("device")    # the device
-            try:                                # the freedom (int format)
-                freedom = int(info_dict.get("freedom"))
+        if info_dict is not None:                            # if the server responded
+            name = info_dict.get("name", "Unknown")          # get the name
+            device = info_dict.get("device", "Unknown")      # the device
+            try:                                             # the freedom (int format)
+                freedom = int(info_dict.get("freedom", 0))
             except (TypeError, ValueError):
                 freedom = 0
 
@@ -147,7 +147,7 @@ class ClientManager(QObject):
         Signals Emitted:
             - server_pinged(address, alive)
             - server_contacted(address)
-            - server_data_received(address, data)
+            - server_data_received(address, data, device)
         '''
         # for each client
         for address, client in self.clients.items():
@@ -164,8 +164,9 @@ class ClientManager(QObject):
             self.server_contacted.emit(address)    # update the last time the server responded
             reply = client.get()                   # get the data stored in the server
             if reply is not None:                  # if the data is received
-                data = reply.get("payload", {}).get("data")     # extract the data from the reply
-                self.server_data_received.emit(address, data)   # transmit it to the panels
+                data = reply.get("payload", {}).get("data", {})    # extract the data from the reply
+                device = self.server_devices[address]
+                self.server_data_received.emit(address, data, device)   # transmit it to the panels
 
 
     def save_all(self, new_path: str) -> None:

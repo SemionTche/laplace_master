@@ -46,6 +46,9 @@ class OptimizationPanel(QWidget):
         # Motor control checkbox
         self.motor_checkbox = QCheckBox("Allow optimization to drive motors")
         self.motor_checkbox.setEnabled(False)
+        self.motor_checkbox.toggled.connect(
+            lambda enabled: log.info("Optimization driving motors enabled.") if enabled else log.info("Optimization driving motors disabled.") 
+        )
         self.motor_checkbox.toggled.connect(self.motor_control_changed)
         self.hbox.addWidget(self.motor_checkbox)
 

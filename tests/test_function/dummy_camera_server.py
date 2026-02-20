@@ -39,7 +39,7 @@ class DummyCamera:
             "electron_charge": charge.tolist(),
             "electron_energy_mean": energy.tolist(),
         }
-
+        print(f"[Camera] Position read: {x1}, {x2}")
         print(f"[Camera] Measured {payload}")
 
         return payload

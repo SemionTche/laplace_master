@@ -217,14 +217,18 @@ class MasterWindow(QMainWindow):
         self.optimizationPanel.next_queue_clicked.connect(
             self.brain._next
         )
-            # when data is received, from opt, add it in the brain queue
+
         self.client_manager.server_data_received.connect(
-            self.brain.on_opt_data
+            self.route_brain
         )
-            # when data is received, from diags, prepare the brain response for the opt 
-        self.client_manager.server_data_received.connect(
-            self.brain.on_measurement
-        )
+        #     # when data is received, from opt, add it in the brain queue
+        # self.client_manager.server_data_received.connect(
+        #     self.brain.on_opt_data
+        # )
+        #     # when data is received, from diags, prepare the brain response for the opt 
+        # self.client_manager.server_data_received.connect(
+        #     self.brain.on_measurement
+        # )
 
 
     def route_server(self, address: str) -> None:
@@ -302,6 +306,19 @@ class MasterWindow(QMainWindow):
             )
             log.info(f"New optimization server added:\n"
                      f"name={info.name or "Unknown"}, address={info.address}")
+
+
+    def route_brain(self, 
+                    address: str, 
+                    data: dict,
+                    device: str) -> None:
+        '''
+        '''
+        if device == DEVICE_OPT:
+            self.brain.on_opt_data(address, data)
+
+        elif device in (DEVICE_CAMERA, DEVICE_GAS):
+            self.brain.on_measurement(address, data)
 
 
     def closeEvent(self, event) -> None:
