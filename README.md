@@ -99,20 +99,12 @@ This design ensures:
 
 ---
 
-## Project Structure (Simplified)
+## Project Structure
 
-master/
-│
-├── client/
-│   ├── clientManager.py
-│   └── brain.py
-│
-├── interface/
-│   ├── panels/
-│   └── widgets/
-│
-├── main.py
-└── config.ini
+- `client/` — backend modules handling server communication (`ClientManager`) and optimization coordination (`Brain`).
+- `interface/` — GUI components (panels and widgets).
+- `main.py` — entry point launching the Master window.
+- `config.ini` — application configuration.
 
 ---
 
