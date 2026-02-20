@@ -1,6 +1,5 @@
 # libraries
 from laplace_log import log
-
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, 
     QListWidgetItem, QPushButton, QGroupBox, 
@@ -47,6 +46,9 @@ class OptimizationPanel(QWidget):
         # Motor control checkbox
         self.motor_checkbox = QCheckBox("Allow optimization to drive motors")
         self.motor_checkbox.setEnabled(False)
+        self.motor_checkbox.toggled.connect(
+            lambda enabled: log.info("Optimization driving motors enabled.") if enabled else log.info("Optimization driving motors disabled.") 
+        )
         self.motor_checkbox.toggled.connect(self.motor_control_changed)
         self.hbox.addWidget(self.motor_checkbox)
 
@@ -66,7 +68,7 @@ class OptimizationPanel(QWidget):
         log.debug("Optimization Panel loaded.")
 
 
-    def add_server(self, address: str, name: str):
+    def add_server(self, address: str, name: str) -> None:
         '''
         Add a server line in the optimization panel.
         '''
@@ -86,13 +88,13 @@ class OptimizationPanel(QWidget):
         self.next_queue_button.setEnabled(True)
 
 
-    def on_next_queue(self):
+    def on_next_queue(self) -> None:
         '''Emit a signal when the 'Next in Queue' button is clicked.'''
         log.info("Next in queue button clicked.")
         self.next_queue_clicked.emit(True)
 
 
-    def on_disconnect(self):
+    def on_disconnect(self) -> None:
         '''
         Enables checkboxes to select server(s) to connect/disconnect.
         '''
@@ -113,7 +115,7 @@ class OptimizationPanel(QWidget):
         layout.addWidget(self.confirm_button)
 
 
-    def cancel_selection(self):
+    def cancel_selection(self) -> None:
         '''
         Cancel selection and restore the connect/disconnect button.
         '''
@@ -122,7 +124,7 @@ class OptimizationPanel(QWidget):
         self._restore_disconnect_button()
 
 
-    def confirm_selection(self):
+    def confirm_selection(self) -> None:
         '''
         Confirm selection, toggle connection state, emit signal, and restore button.
         '''
@@ -134,7 +136,7 @@ class OptimizationPanel(QWidget):
         self._restore_disconnect_button()
 
 
-    def _restore_disconnect_button(self):
+    def _restore_disconnect_button(self) -> None:
         layout = self.cancel_button.parentWidget().layout()
         self.cancel_button.deleteLater()
         self.confirm_button.deleteLater()
@@ -144,16 +146,19 @@ class OptimizationPanel(QWidget):
         layout.addWidget(self.disconnect_button)
 
 
-    def _on_server_connection_changed(self, address: str, connected: bool):
+    def _on_server_connection_changed(self, 
+                                      address: str, 
+                                      connected: bool) -> None:
         '''
         Emit the signal exactly like ConnectionPanel.
         Enforce single connection and update motor checkbox.
         '''
+        log.info(f"[OptimizationPanel] Server connection status changed | address={address} | connected={connected}")
         self.server_connection_changed.emit(address, connected)
         self._enforce_single_connection()
 
 
-    def _enforce_single_connection(self):
+    def _enforce_single_connection(self) -> None:
         '''
         Disconnect all other servers except the one currently connected.
         '''
@@ -172,7 +177,7 @@ class OptimizationPanel(QWidget):
             self.motor_checkbox.setChecked(False)
 
 
-    def update_server_last_msg(self, address: str):
+    def update_server_last_msg(self, address: str) -> None:
         '''
         Helper to change the last time a message was received from a server.
         '''
