@@ -1,5 +1,5 @@
 # libraries
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, pyqtSignal
 from laplace_log import log
 
 # project
@@ -17,6 +17,7 @@ class Brain(QObject):
     synchronizes measurements from multiple sources, and returns
     aggregated results to the optimization server.
     '''
+    queue_updated = pyqtSignal(list, dict)
 
     def __init__(self, client_manager: ClientManager):
         '''
@@ -35,6 +36,7 @@ class Brain(QObject):
         
         self.suggestions = []  # candidates suggested by the optimizer
         self.results = []      # collected results from the diagnostics
+        self.obj_spec = {}
 
         self.current = None   # Currently evaluated sample
         self.waiting = False  # True while waiting for a measurement
@@ -75,9 +77,11 @@ class Brain(QObject):
         # reset the attributes
         self.suggestions.clear()
         self.results.clear()
+        self.obj_spec.clear()
         self.current = None
         self.waiting = False
         log.info("The Brain suggestions were cleared.")
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # log.info("New optimization data received:\n"
         #         f"{json_style(data)}")
@@ -103,11 +107,12 @@ class Brain(QObject):
         
         log.info("New optimization suggestions added:\n"
                  f"{json_style(self.suggestions)}")
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
         
         self._next()  # provide the next point to the control system
 
 
-    def _next(self, next_in_queue: bool=False) -> None:
+    def _next(self, next_in_queue: int | None=None) -> None:
         '''
         Start evaluation of the next suggested sample if allowed.
 
@@ -124,14 +129,18 @@ class Brain(QObject):
 
         # Do not proceed if motors are not enabled
         # unless we explicitly ask for an element in the suggestions
-        if not (self.motor_control_enabled or next_in_queue):
+        if not (self.motor_control_enabled or next_in_queue is not None):
             return
         
         if not self.suggestions:                        # if there is no suggestion
             log.info("No suggestion available.")        # send the results
             return                                      # get out of the function
 
-        self.current = self.suggestions.pop(0)  # get the current point to sample and pop it from the suggestions
+        if next_in_queue is None:
+            next_in_queue = 0
+
+        self.current = self.suggestions.pop(next_in_queue)  # get the current point to sample and pop it from the suggestions
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
         self.waiting = True                     # we start to wait for a measure
         self.motion_pending = True
 
@@ -247,6 +256,8 @@ class Brain(QObject):
         self.current = None
         self.waiting = False
 
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
+
         if self.suggestions:
             self._next()
         else:
@@ -284,3 +295,8 @@ class Brain(QObject):
         
         if enabled:         # if motors can be drive
             self._next()    # get the next sample
+    
+
+    def delete_suggestion(self, index: int):
+        deleted = self.suggestions.pop(index)
+        log.info(f"Suggestion deleted:\n{json_style(deleted)}")
