@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     server = ServerLHC(
         address=CAMERA_ADDRESS,
-        freedom=2,
+        freedom=0,
         device=DEVICE_CAMERA,
         data={},
         name="dummy_camera"

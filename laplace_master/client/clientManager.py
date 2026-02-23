@@ -2,8 +2,8 @@
 from dataclasses import dataclass
 
 from PyQt6.QtCore import QObject, pyqtSignal
-from laplace_server.protocol import make_set_request
 from laplace_log import log
+from laplace_server.protocol import DEVICE_GAS, DEVICE_MOTOR, DEVICE_OPT
 
 
 # project
@@ -27,7 +27,7 @@ class ClientManager(QObject):
     server_pinged = pyqtSignal(str, bool)           # address, alive
     server_contacted = pyqtSignal(str)              # address
     server_identified = pyqtSignal(str, str)        # address, name
-    server_data_received = pyqtSignal(str, dict, str)    # address, raw data
+    server_data_received = pyqtSignal(str, dict)    # address, raw data
 
     def __init__(self):
         '''
@@ -162,11 +162,27 @@ class ClientManager(QObject):
                 continue   # ignore it
             
             self.server_contacted.emit(address)    # update the last time the server responded
+            
+
             reply = client.get()                   # get the data stored in the server
             if reply is not None:                  # if the data is received
                 data = reply.get("payload", {}).get("data", {})    # extract the data from the reply
-                device = self.server_devices[address]
-                self.server_data_received.emit(address, data, device)   # transmit it to the panels
+                self.server_data_received.emit(address, data)   # transmit it to the control system panel
+
+
+    def poll_optimizer(self, address: str) -> dict | None:
+        client = self.clients.get(address)
+        if not client or not client.connected:
+            return None
+
+        if self.server_devices[address] != DEVICE_OPT:
+            return None
+
+        reply = client.get()
+        if reply is None:
+            return None
+
+        return reply.get("payload", {}).get("data", {})
 
 
     def save_all(self, new_path: str) -> None:
@@ -264,6 +280,9 @@ class ClientManager(QObject):
         '''
         client = self.clients.get(address)
         if not client or not client.connected:
+            return
+
+        if not self.server_devices[address] == DEVICE_OPT:
             return
 
         client.opt_update(data=payload)

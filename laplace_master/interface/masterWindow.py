@@ -63,6 +63,10 @@ class MasterWindow(QMainWindow):
             type=int
         )
         self.timer.start(ping_time_ms)
+
+        self.opt_timer = QTimer()
+        self.opt_timer.timeout.connect(self.poll_optimizer)
+        self.opt_timer.start(1000)  # 1 second, configurable
         
         self.actions()  # signals
 
@@ -208,6 +212,10 @@ class MasterWindow(QMainWindow):
             self.motorsConnectionPanel.update_server_data
         )
 
+        self.client_manager.server_data_received.connect(
+            self.route_server_data
+        )
+
         ### brain actions
             # transmit the motor control state to the brain
         self.optimizationPanel.motor_control_changed.connect(
@@ -218,9 +226,12 @@ class MasterWindow(QMainWindow):
             self.brain._next
         )
 
-        self.client_manager.server_data_received.connect(
-            self.route_brain
-        )
+
+        # self.client_manager.server_data_received.connect(
+        #     self.route_brain
+        # )
+
+
         #     # when data is received, from opt, add it in the brain queue
         # self.client_manager.server_data_received.connect(
         #     self.brain.on_opt_data
@@ -281,7 +292,7 @@ class MasterWindow(QMainWindow):
                 name=info.name or "Unknown"
             )
             log.info(f"New diagnostic server added:\n"
-                     f"name={info.name or "Unknown"}, address={info.address}")
+                     f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
         
         # elif the device is a 'control system'
         elif info.device == DEVICE_MOTOR or info.device == DEVICE_GAS:
@@ -305,20 +316,47 @@ class MasterWindow(QMainWindow):
                 name=info.name or "Optimization"
             )
             log.info(f"New optimization server added:\n"
-                     f"name={info.name or "Unknown"}, address={info.address}")
+                     f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
 
 
-    def route_brain(self, 
-                    address: str, 
-                    data: dict,
-                    device: str) -> None:
-        '''
-        '''
-        if device == DEVICE_OPT:
+    def route_server_data(self, address: str, data: dict):
+
+        device_type = self.client_manager.server_devices.get(address)
+
+        if device_type in [DEVICE_GAS, DEVICE_MOTOR]:
+            try:
+                self.brain.on_motor_position_update(address, data)
+            except Exception as e:
+                log.error(f"Error: while processing motor position update.\n{e}")
+
+        elif device_type == DEVICE_CAMERA:
+            self.brain.on_measurement(address, data)
+
+        elif device_type == DEVICE_OPT:
             self.brain.on_opt_data(address, data)
 
-        elif device in (DEVICE_CAMERA, DEVICE_GAS):
-            self.brain.on_measurement(address, data)
+
+
+    # def route_brain(self, 
+    #                 address: str, 
+    #                 data: dict,
+    #                 device: str) -> None:
+    #     '''
+    #     '''
+    #     if device == DEVICE_OPT:
+    #         self.brain.on_opt_data(address, data)
+
+    #     elif device in (DEVICE_CAMERA, DEVICE_GAS):
+    #         self.brain.on_measurement(address, data)
+
+
+    def poll_optimizer(self):
+        for address, device in self.client_manager.server_devices.items():
+            if device == DEVICE_OPT:
+                data = self.client_manager.poll_optimizer(address)
+                if data:
+                    self.brain.on_opt_data(address, data)
+
 
 
     def closeEvent(self, event) -> None:
