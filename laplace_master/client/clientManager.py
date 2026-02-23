@@ -163,11 +163,11 @@ class ClientManager(QObject):
             
             self.server_contacted.emit(address)    # update the last time the server responded
             
-            if self.server_devices[address] in [DEVICE_MOTOR, DEVICE_GAS]:
-                reply = client.get()                   # get the data stored in the server
-                if reply is not None:                  # if the data is received
-                    data = reply.get("payload", {}).get("data", {})    # extract the data from the reply
-                    self.server_data_received.emit(address, data)   # transmit it to the control system panel
+
+            reply = client.get()                   # get the data stored in the server
+            if reply is not None:                  # if the data is received
+                data = reply.get("payload", {}).get("data", {})    # extract the data from the reply
+                self.server_data_received.emit(address, data)   # transmit it to the control system panel
 
 
     def poll_optimizer(self, address: str) -> dict | None:

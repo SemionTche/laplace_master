@@ -259,8 +259,7 @@ class ConnectionPanel(QWidget):
 
     def update_server_data(self,
                            address: str,
-                           data: dict,
-                           device: str) -> None:
+                           data: dict) -> None:
         '''
         Transmit data to ServerControlWidget.
         '''

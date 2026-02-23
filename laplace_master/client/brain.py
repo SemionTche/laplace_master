@@ -5,6 +5,7 @@ from laplace_log import log
 # project
 from client.clientManager import ClientManager
 from utils.json_encoder import json_style
+from utils.config_helper import get_from_config
 
 
 class Brain(QObject):
@@ -37,8 +38,15 @@ class Brain(QObject):
 
         self.current = None   # Currently evaluated sample
         self.waiting = False  # True while waiting for a measurement
+        self.motion_pending = False  # doing a measurement (motors moving)
 
         self.opt_address = "Unknown"  # Address of the OPT server
+
+        self.tolerance = get_from_config(
+            module="opt",
+            item="tolerance",
+            default_value=1e-4,
+            type=float)
 
         log.info("Brain loaded.")
 
@@ -110,7 +118,9 @@ class Brain(QObject):
         # if we are waiting for a measure 
         if self.waiting:
             return         # don't look for the next suggestion
-        
+
+        if self.motion_pending:
+            return
 
         # Do not proceed if motors are not enabled
         # unless we explicitly ask for an element in the suggestions
@@ -123,6 +133,7 @@ class Brain(QObject):
 
         self.current = self.suggestions.pop(0)  # get the current point to sample and pop it from the suggestions
         self.waiting = True                     # we start to wait for a measure
+        self.motion_pending = True
 
         self.current_measurements = {}          # gather the measures
         self.expected_sources = set(self.obj_spec.keys())
@@ -134,6 +145,31 @@ class Brain(QObject):
 
         # if not self.suggestions:    # if there is no suggestion
         #     self._send_results()    # send results
+
+
+    def on_motor_position_update(self, address: str, positions: dict):
+        if not self.waiting or not self.motion_pending:
+            return
+
+        target = self.current["inputs"]
+
+        if self._motors_match_target(positions, target):
+            log.info("Motors reached target. Starting measurement phase.")
+            self.motion_pending = False
+
+
+    def _motors_match_target(self, current, target):        
+        current_positions = current.get("positions", [])
+
+        for address, target_positions in target.items():
+            if len(current_positions) != len(target_positions):
+                return False
+
+            for c, t in zip(current_positions, target_positions):
+                if abs(c - t) > self.tolerance:
+                    return False
+
+        return True
 
 
     def on_measurement(self, 
@@ -156,12 +192,20 @@ class Brain(QObject):
         if not self.waiting:               # if we are not waiting for a measure
             return                         # we do not continue
 
+        if self.motion_pending:
+            return
+
         if address not in self.obj_spec:   # if a measure is received from an unexpected address
             return                         # ignore it
 
         values = data
         if not isinstance(values, dict):
             return
+        
+        log.info(
+            f"Measurement received from {address}:\n"
+            f"{json_style(values)}"
+        )
 
         # Initialize storage
         self.current_measurements.setdefault(address, {})  # create a key with empty dict in current_measurements
@@ -178,6 +222,7 @@ class Brain(QObject):
 
         # Finalize sample if everything is collected
         if not self.expected_sources:
+            log.info("All diagnostic measurements collected. Finalizing sample.")
             self._finalize_current_sample()
 
 
@@ -201,7 +246,6 @@ class Brain(QObject):
 
         self.current = None
         self.waiting = False
-        # self._next()
 
         if self.suggestions:
             self._next()
