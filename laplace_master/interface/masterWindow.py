@@ -226,6 +226,10 @@ class MasterWindow(QMainWindow):
             self.brain._next
         )
 
+        self.brain.queue_updated.connect(
+            self.optimizationPanel.queue_viewer.set_queue
+        )
+
 
         # self.client_manager.server_data_received.connect(
         #     self.route_brain

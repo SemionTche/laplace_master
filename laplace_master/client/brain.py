@@ -1,5 +1,5 @@
 # libraries
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, pyqtSignal
 from laplace_log import log
 
 # project
@@ -17,6 +17,7 @@ class Brain(QObject):
     synchronizes measurements from multiple sources, and returns
     aggregated results to the optimization server.
     '''
+    queue_updated = pyqtSignal(list, dict)
 
     def __init__(self, client_manager: ClientManager):
         '''
@@ -35,7 +36,8 @@ class Brain(QObject):
         
         self.suggestions = []  # candidates suggested by the optimizer
         self.results = []      # collected results from the diagnostics
-
+        self.obj_spec = {}
+        
         self.current = None   # Currently evaluated sample
         self.waiting = False  # True while waiting for a measurement
         self.motion_pending = False  # doing a measurement (motors moving)
@@ -75,9 +77,11 @@ class Brain(QObject):
         # reset the attributes
         self.suggestions.clear()
         self.results.clear()
+        self.obj_spec.clear()
         self.current = None
         self.waiting = False
         log.info("The Brain suggestions were cleared.")
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # log.info("New optimization data received:\n"
         #         f"{json_style(data)}")
@@ -103,6 +107,7 @@ class Brain(QObject):
         
         log.info("New optimization suggestions added:\n"
                  f"{json_style(self.suggestions)}")
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
         
         self._next()  # provide the next point to the control system
 
@@ -132,6 +137,7 @@ class Brain(QObject):
             return                                      # get out of the function
 
         self.current = self.suggestions.pop(0)  # get the current point to sample and pop it from the suggestions
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
         self.waiting = True                     # we start to wait for a measure
         self.motion_pending = True
 
@@ -246,6 +252,8 @@ class Brain(QObject):
 
         self.current = None
         self.waiting = False
+
+        self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         if self.suggestions:
             self._next()
