@@ -19,7 +19,7 @@ class OptimizationPanel(QWidget):
     '''
     server_connection_changed = pyqtSignal(str, bool)
     motor_control_changed = pyqtSignal(bool)
-    next_queue_clicked = pyqtSignal(bool)
+    next_queue_clicked = pyqtSignal(int)
 
     def __init__(self, title="Optimization"):
         super().__init__()
@@ -95,7 +95,7 @@ class OptimizationPanel(QWidget):
     def on_next_queue(self) -> None:
         '''Emit a signal when the 'Next in Queue' button is clicked.'''
         log.info("Next in queue button clicked.")
-        self.next_queue_clicked.emit(True)
+        self.next_queue_clicked.emit(self.queue_viewer.current_index)
 
 
     def on_disconnect(self) -> None:

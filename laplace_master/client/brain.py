@@ -112,7 +112,7 @@ class Brain(QObject):
         self._next()  # provide the next point to the control system
 
 
-    def _next(self, next_in_queue: bool=False) -> None:
+    def _next(self, next_in_queue: int | None=None) -> None:
         '''
         Start evaluation of the next suggested sample if allowed.
 
@@ -129,14 +129,17 @@ class Brain(QObject):
 
         # Do not proceed if motors are not enabled
         # unless we explicitly ask for an element in the suggestions
-        if not (self.motor_control_enabled or next_in_queue):
+        if not (self.motor_control_enabled or next_in_queue is not None):
             return
         
         if not self.suggestions:                        # if there is no suggestion
             log.info("No suggestion available.")        # send the results
             return                                      # get out of the function
 
-        self.current = self.suggestions.pop(0)  # get the current point to sample and pop it from the suggestions
+        if next_in_queue is None:
+            next_in_queue = 0
+
+        self.current = self.suggestions.pop(next_in_queue)  # get the current point to sample and pop it from the suggestions
         self.queue_updated.emit(self.suggestions, self.obj_spec)
         self.waiting = True                     # we start to wait for a measure
         self.motion_pending = True
