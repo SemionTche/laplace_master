@@ -63,6 +63,10 @@ class MasterWindow(QMainWindow):
             type=int
         )
         self.timer.start(ping_time_ms)
+
+        self.opt_timer = QTimer()
+        self.opt_timer.timeout.connect(self.poll_optimizer)
+        self.opt_timer.start(1000)  # 1 second, configurable
         
         self.actions()  # signals
 
@@ -218,9 +222,11 @@ class MasterWindow(QMainWindow):
             self.brain._next
         )
 
-        self.client_manager.server_data_received.connect(
-            self.route_brain
-        )
+        # self.client_manager.server_data_received.connect(
+        #     self.route_brain
+        # )
+
+
         #     # when data is received, from opt, add it in the brain queue
         # self.client_manager.server_data_received.connect(
         #     self.brain.on_opt_data
@@ -319,6 +325,15 @@ class MasterWindow(QMainWindow):
 
         elif device in (DEVICE_CAMERA, DEVICE_GAS):
             self.brain.on_measurement(address, data)
+
+
+    def poll_optimizer(self):
+        for address, device in self.client_manager.server_devices.items():
+            if device == DEVICE_OPT:
+                data = self.client_manager.poll_optimizer(address)
+                if data:
+                    self.brain.on_opt_data(address, data)
+
 
 
     def closeEvent(self, event) -> None:
