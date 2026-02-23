@@ -230,6 +230,10 @@ class MasterWindow(QMainWindow):
             self.optimizationPanel.queue_viewer.set_queue
         )
 
+        self.optimizationPanel.queue_viewer.delete_current.connect(
+            self.brain.delete_suggestion
+        )
+
 
         # self.client_manager.server_data_received.connect(
         #     self.route_brain

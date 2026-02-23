@@ -37,7 +37,7 @@ class Brain(QObject):
         self.suggestions = []  # candidates suggested by the optimizer
         self.results = []      # collected results from the diagnostics
         self.obj_spec = {}
-        
+
         self.current = None   # Currently evaluated sample
         self.waiting = False  # True while waiting for a measurement
         self.motion_pending = False  # doing a measurement (motors moving)
@@ -292,3 +292,8 @@ class Brain(QObject):
         
         if enabled:         # if motors can be drive
             self._next()    # get the next sample
+    
+
+    def delete_suggestion(self, index: int):
+        deleted = self.suggestions.pop(index)
+        log.info(f"Suggestion deleted:\n{json_style(deleted)}")

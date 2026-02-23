@@ -23,7 +23,7 @@ class QueueViewerWidget(QWidget):
     # Signals (logic handled elsewhere)
     navigate_left = pyqtSignal()
     navigate_right = pyqtSignal()
-    delete_current = pyqtSignal()
+    delete_current = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -108,6 +108,7 @@ class QueueViewerWidget(QWidget):
     def on_delete(self):
         if self.queue:
             self.queue.pop(self.current_index)
+            self.delete_current.emit(self.current_index)
             if self.current_index >= len(self.queue):
                 self.current_index = max(0, len(self.queue) - 1)
             self.update_display()
