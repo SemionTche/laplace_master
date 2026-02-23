@@ -222,7 +222,7 @@ class MasterWindow(QMainWindow):
             self.brain.set_motor_control
         )
             # use the brain next element in queue when button next queue clicked
-        self.optimizationPanel.next_queue_clicked.connect(
+        self.optimizationPanel.next_sample_clicked.connect(
             self.brain._next
         )
 

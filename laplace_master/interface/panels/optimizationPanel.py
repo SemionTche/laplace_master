@@ -19,7 +19,7 @@ class OptimizationPanel(QWidget):
     '''
     server_connection_changed = pyqtSignal(str, bool)
     motor_control_changed = pyqtSignal(bool)
-    next_queue_clicked = pyqtSignal(int)
+    next_sample_clicked = pyqtSignal(int)
 
     def __init__(self, title="Optimization"):
         super().__init__()
@@ -57,10 +57,10 @@ class OptimizationPanel(QWidget):
         self.hbox.addWidget(self.motor_checkbox)
 
         # Next in queue button
-        self.next_queue_button = QPushButton("Next in queue")
-        self.next_queue_button.setEnabled(False)
-        self.next_queue_button.clicked.connect(self.on_next_queue)
-        self.hbox.addWidget(self.next_queue_button)
+        self.next_sample_button = QPushButton("Next sample")
+        self.next_sample_button.setEnabled(False)
+        self.next_sample_button.clicked.connect(self.on_next_sample)
+        self.hbox.addWidget(self.next_sample_button)
 
         self.main_layout.addLayout(self.hbox)
 
@@ -89,13 +89,14 @@ class OptimizationPanel(QWidget):
 
         # Since a server exists, enable the motor checkbox immediately
         self.motor_checkbox.setEnabled(True)
-        self.next_queue_button.setEnabled(True)
+        self.next_sample_button.setEnabled(True)
 
 
-    def on_next_queue(self) -> None:
+    def on_next_sample(self) -> None:
         '''Emit a signal when the 'Next in Queue' button is clicked.'''
-        log.info("Next in queue button clicked.")
-        self.next_queue_clicked.emit(self.queue_viewer.current_index)
+        current_index = self.queue_viewer.current_index
+        log.debug(f"Next sample button clicked. Current index = {current_index}")
+        self.next_sample_clicked.emit(current_index)
 
 
     def on_disconnect(self) -> None:
@@ -176,7 +177,7 @@ class OptimizationPanel(QWidget):
 
         # Update motor checkbox
         self.motor_checkbox.setEnabled(active_server is not None)
-        self.next_queue_button.setEnabled(active_server is not None)
+        self.next_sample_button.setEnabled(active_server is not None)
         if active_server is None:
             self.motor_checkbox.setChecked(False)
 
