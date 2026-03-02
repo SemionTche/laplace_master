@@ -19,7 +19,7 @@ from laplace_log import log
 
 # project
 from interface.panels import (
-    ConnectionPanel, OptimizationPanel
+    ConnectionPanel, OptimizationPanel, LaserPanel
 )
 from interface.widgets import (
     SaveBar, ServerBar
@@ -123,8 +123,9 @@ class MasterWindow(QMainWindow):
         main_layout.addLayout(grid_layout)
 
             # Top-left label
-        laser_label = QLabel("laser")
-        laser_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.laser_panel = LaserPanel()
+        # laser_label = QLabel("laser")
+        # laser_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             # Top-right layout for diags panel
         self.diagsConnectionPanel = ConnectionPanel("Diagnostics")
@@ -136,7 +137,8 @@ class MasterWindow(QMainWindow):
         self.optimizationPanel = OptimizationPanel()
 
             # Add widgets to the grid layout
-        grid_layout.addWidget(laser_label, 0, 0)
+        # grid_layout.addWidget(laser_label, 0, 0)
+        grid_layout.addWidget(self.laser_panel, 0, 0)
         grid_layout.addWidget(self.diagsConnectionPanel, 0, 1)
         grid_layout.addWidget(self.motorsConnectionPanel, 1, 0)
         grid_layout.addWidget(self.optimizationPanel, 1, 1)
