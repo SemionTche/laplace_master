@@ -1,6 +1,7 @@
 # libraries
 import pathlib
 
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, 
     QLabel, QCheckBox
@@ -9,7 +10,7 @@ from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon
 
 
-class ServerItemWidget(QWidget):
+class ShotNumberWidget(QWidget):
     '''
     Class made to define the line content in 'ConnectionPanel'.
     Display the element related to the server as a 'QWidget'.

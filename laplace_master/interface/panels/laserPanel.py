@@ -29,8 +29,8 @@ class LaserPanel(QWidget):
         # inside the group box
         self.main_layout = QVBoxLayout(self.group_box)
 
-        self.shoot_number_box = QGroupBox("Shoot number:")
-        self.main_layout.addWidget(self.shoot_number_box)
+        self.shot_number_box = QGroupBox("Shot number:")
+        self.main_layout.addWidget(self.shot_number_box)
 
         self.laser = QGroupBox("Laser:")
         self.main_layout.addWidget(self.laser)
