@@ -115,8 +115,15 @@ This design ensures:
 - ZeroMQ (pyzmq)
 - `laplace-server` package
 - `laplace-log` package
+- torch (optional, used only for diagnostic test server)
 
 Install dependencies with:
 
 ```bash
 pip install pyqt6 pyzmq qdarkstyle laplace-server laplace-log
+```
+
+Optional
+```bash
+pip install torch
+```
