@@ -273,6 +273,18 @@ class MasterWindow(QMainWindow):
             return  # get out of the routing session
 
         # if the client did get not answer
+        if info.already:
+            msg = f'The server "{address}" was already reached.'
+            log.info(msg)
+            
+            # create a message box
+            QMessageBox.warning(
+                self, "Server already reached", msg,
+                QMessageBox.StandardButton.Ok
+            )
+            return  # get out of the routing session
+
+        # if the client did get not answer
         if not info.alive:
             msg = f'The server "{address}" did not respond.'
             log.info(msg)

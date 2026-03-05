@@ -15,6 +15,7 @@ class ServerInfo:
     '''Class made to define the information received from the server.'''
     address: str
     alive: bool
+    already: bool
     name: str | None
     device: str | None
     freedom : int
@@ -67,6 +68,17 @@ class ClientManager(QObject):
                 - ServerInfo with alive=False if unreachable.
                 - None if the address format is invalid.
         '''
+        if address in self.clients.keys():       # if the client already exist
+            client = self.clients[address]
+            return ServerInfo(                   # return the corresponding informations
+                address=address,
+                alive=client.enabled,
+                already=True,
+                name=client.server_name,
+                device=client.server_device,
+                freedom=client.server_freedom
+            )
+        
         log.info(f"Probing the server: {address}")
         # try to connect to the server
         try:
@@ -81,6 +93,7 @@ class ClientManager(QObject):
             return ServerInfo(          # inform that server is not alive
                 address=address,
                 alive=False,
+                already=False,
                 name=None,
                 device=None,
                 freedom=0
@@ -103,7 +116,8 @@ class ClientManager(QObject):
             
             return ServerInfo(     # return the structured informations
                 address=address, 
-                alive=True, 
+                alive=True,
+                already=False,
                 name=name, 
                 device=device, 
                 freedom=freedom
@@ -114,7 +128,8 @@ class ClientManager(QObject):
         self.clients.pop(address)   # pop the client from the dict
         return ServerInfo(          # return not alive
             address=address, 
-            alive=False, 
+            alive=False,
+            already=False,
             name=None, 
             device=None, 
             freedom=0

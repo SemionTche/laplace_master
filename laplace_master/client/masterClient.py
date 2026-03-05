@@ -49,6 +49,7 @@ class MasterClient:
         self.enabled = True
         self.server_name = "Unknown"
         self.server_device = "Unknown"
+        self.server_freedom = 0
 
 
     def set_connected(self, enabled: bool) -> None:
@@ -166,6 +167,7 @@ class MasterClient:
             payload: dict = reply.get("payload", {})
             self.server_name = payload.get("name", "Unknown")
             self.server_device = payload.get("device", "Unknown")
+            self.server_freedom = int(payload.get("freedom", 0))
 
             return payload
 
