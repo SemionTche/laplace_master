@@ -1,11 +1,12 @@
 # libraries
 import pathlib
 
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, 
     QLabel, QCheckBox
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
 
 
@@ -19,6 +20,7 @@ class ServerControlWidget(QWidget):
     The flag `self.connected` indicates whether communication with the
     corresponding device server is enabled.
     '''
+    motor_connection = pyqtSignal(str, int, bool, float)
 
     def __init__(self, address: str, motor_index: int):
         '''
@@ -34,12 +36,11 @@ class ServerControlWidget(QWidget):
                 motor_index: (int)
                     Index of the motor (degree of freedom) handled
                     by the server.
-        '''
-
-        
+        '''        
         super().__init__() # heritage from QWidget
 
         self.address = address
+        self.name = "Motor"
         self.motor_index = motor_index
         self.connected = True  # connection flag
 
@@ -70,7 +71,7 @@ class ServerControlWidget(QWidget):
         layout.addWidget(self.state_icon)
 
         # label
-        self.label = QLabel(f"Motor {motor_index}")
+        self.label = QLabel(f"{self.name} {motor_index}")
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.label, stretch=1)
 
@@ -112,6 +113,14 @@ class ServerControlWidget(QWidget):
 
         icon = self.connected_icon if self.connected else self.disconnected_icon
         self.state_icon.setPixmap(icon.pixmap(16, 16))
+
+        log.debug(f"{self.name} {self.motor_index} from {self.address} {"enabled" if self.is_selected() else "disabled"}.")
+        self.motor_connection.emit(
+            str(self.address), 
+            int(self.motor_index), 
+            bool(self.connected), 
+            float(self.value.text())
+        )
 
 
     def update_positions(self, position: float, unit: str) -> None:

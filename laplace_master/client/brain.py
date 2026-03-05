@@ -43,12 +43,14 @@ class Brain(QObject):
         self.motion_pending = False  # doing a measurement (motors moving)
 
         self.opt_address = "Unknown"  # Address of the OPT server
-
+        self.motors: dict[str, list[dict]] = {}   # mask to determine which motor can move and what was the position when state changed
+        
         self.tolerance = get_from_config(
             module="opt",
             item="tolerance",
             default_value=1e-4,
-            type=float)
+            type=float
+        )
 
         log.info("Brain loaded.")
 
@@ -90,7 +92,7 @@ class Brain(QObject):
         obj: dict = data.get("obj", {})    # get the objective list of keys along each objective address
 
         normalized_obj = {}
-        # verifie que le dictionnaire contient des listes et que ces listes contienent des strings
+        # verify that the dict contains lists and that those lists are made of strings
         for addr, keys in obj.items():
             if not isinstance(keys, list) or not all(isinstance(k, str) for k in keys):
                 raise ValueError(
@@ -147,36 +149,77 @@ class Brain(QObject):
         self.current_measurements = {}          # gather the measures
         self.expected_sources = set(self.obj_spec.keys())
 
+        inputs = {}
+        for addr, targets in self.current["inputs"].items():
+            
+            motor_list = self.motors.get(addr)
+            
+            if motor_list is None:
+                inputs[addr] = targets
+                continue
+
+            filtered = []
+
+            for i, t in enumerate(targets):
+                if motor_list[i]["enabled"]:
+                    filtered.append(t)
+                else:
+                    position = motor_list[i]["position"]
+                    filtered.append(position)
+                    log.info(f"The motor {i + 1} from {addr} is disabled.\n" 
+                             f"Using the current position: {position}, rather than the suggestion: {t}")
+            
+            inputs[addr] = filtered
+
+        # log.info("Measuring inputs:\n"
+        #          f"{json_style(self.current['inputs'])}")
+
+        # self.client_manager.sample_point(self.current["inputs"])  # send the imputs to control system servers
+        
         log.info("Measuring inputs:\n"
-                 f"{json_style(self.current['inputs'])}")
+                    f"{json_style(inputs)}")
 
-        self.client_manager.sample_point(self.current["inputs"])  # send the imputs to control system servers
-
-        # if not self.suggestions:    # if there is no suggestion
-        #     self._send_results()    # send results
+        self.client_manager.sample_point(inputs)  # send the imputs to control system servers
 
 
     def on_motor_position_update(self, address: str, positions: dict):
+        # update the motor mask
+        motor_list = self.motors.get(address)
+        if motor_list:
+            for i, pos in enumerate(positions.get("positions", [])):
+                motor_list[i]["position"] = pos
+
         if not self.waiting or not self.motion_pending:
             return
 
         target = self.current["inputs"]
 
-        if self._motors_match_target(positions, target):
+        if self._motors_match_target(address, positions, target):
             log.info("Motors reached target. Starting measurement phase.")
             self.motion_pending = False
 
 
-    def _motors_match_target(self, current, target):        
+    def _motors_match_target(self, address, current, target):        
         current_positions = current.get("positions", [])
+        target_positions = target.get(address)
 
-        for address, target_positions in target.items():
-            if len(current_positions) != len(target_positions):
+        if target_positions is None:
+            return False
+
+        if len(current_positions) != len(target_positions):
+            return False
+        
+        for c, t in zip(current_positions, target_positions):
+            if abs(c - t) > self.tolerance:
                 return False
 
-            for c, t in zip(current_positions, target_positions):
-                if abs(c - t) > self.tolerance:
-                    return False
+        # for address, target_positions in target.items():
+        #     if len(current_positions) != len(target_positions):
+        #         return False
+
+        #     for c, t in zip(current_positions, target_positions):
+        #         if abs(c - t) > self.tolerance:
+        #             return False
 
         return True
 
@@ -213,7 +256,7 @@ class Brain(QObject):
         
         log.info(
             f"Measurement received from {address}:\n"
-            f"{json_style(values)}"
+                f"{json_style(values)}"
         )
 
         # Initialize storage
@@ -295,8 +338,32 @@ class Brain(QObject):
         
         if enabled:         # if motors can be drive
             self._next()    # get the next sample
-    
+
+
+    def set_motor_enabled(self, 
+                          address: str, 
+                          index: int, 
+                          enabled: bool,
+                          position: float) -> None:
+        '''
+        Define if the motor can move.
+        '''
+        if address not in self.motors:
+            return
+
+        self.motors[address][index - 1] = {"enabled": enabled, "position": position}
+        log.info(f"Motooooors = {self.motors}")
+
+
+    def register_motor_server(self, address: str, freedom: int):
+        '''Set the motor mask'''
+        self.motors[address] = [
+            {"enabled" : True, "position": None}
+            for _ in range(freedom)
+        ]
+
 
     def delete_suggestion(self, index: int):
         deleted = self.suggestions.pop(index)
-        log.info(f"Suggestion deleted:\n{json_style(deleted)}")
+        log.info(f"Suggestion deleted:\n"
+                    f"{json_style(deleted)}")

@@ -22,6 +22,7 @@ class ConnectionPanel(QWidget):
     # to MasterWindow where it will be transmit to ClientManager in order
     # to  open / close the corresponding client.
     server_connection_changed = pyqtSignal(str, bool)
+    motor_connection_changed = pyqtSignal(str, int, bool, float)
 
     def __init__(self, title: str = ""):
         '''
@@ -135,6 +136,9 @@ class ConnectionPanel(QWidget):
 
             widget = ServerControlWidget(address, i + 1)  # numbering starts at 1
             widget.enable_selection(False)                # controls are NOT selectable by default
+            widget.motor_connection.connect(              # when a motor connection is changed
+                self.on_motor_connection_changed          # use the corresponding function
+            )
 
             item.setSizeHint(widget.sizeHint())
             self.server_list_widget.addItem(item)
@@ -243,6 +247,18 @@ class ConnectionPanel(QWidget):
         for widget in list_widgets:
             if main_widget.connected != widget.connected:
                 widget.toggle_connection_state()
+
+
+    def on_motor_connection_changed(self, 
+                                    address: str, 
+                                    motor_index: int,
+                                    enabled: bool,
+                                    position: float) -> None:
+        '''
+        Function made to transmit the signal from the ServerControlWidget
+        to the MasterWindow.
+        '''
+        self.motor_connection_changed.emit(address, motor_index, enabled, position)
 
 
     def on_server_alive_changed(self, address: str, alive: bool) -> None:

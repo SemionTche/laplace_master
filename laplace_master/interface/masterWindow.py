@@ -236,20 +236,10 @@ class MasterWindow(QMainWindow):
             self.brain.delete_suggestion
         )
 
-
-        # self.client_manager.server_data_received.connect(
-        #     self.route_brain
-        # )
-
-
-        #     # when data is received, from opt, add it in the brain queue
-        # self.client_manager.server_data_received.connect(
-        #     self.brain.on_opt_data
-        # )
-        #     # when data is received, from diags, prepare the brain response for the opt 
-        # self.client_manager.server_data_received.connect(
-        #     self.brain.on_measurement
-        # )
+        # when the motor is enabled / disabled, set the corresponding information in brain
+        self.motorsConnectionPanel.motor_connection_changed.connect(
+            self.brain.set_motor_enabled
+        )
 
 
     def route_server(self, address: str) -> None:
@@ -313,6 +303,10 @@ class MasterWindow(QMainWindow):
             )
             # create a subline per degree of freedom
             if info.freedom:
+                self.brain.register_motor_server(   # register in the brain
+                    info.address, 
+                    info.freedom
+                )
                 self.motorsConnectionPanel.add_server_controls(
                     info.address,
                     info.freedom
