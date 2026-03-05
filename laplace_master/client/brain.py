@@ -170,17 +170,12 @@ class Brain(QObject):
                              f"Using the current position: {position}, rather than the suggestion: {t}")
             
             inputs[addr] = filtered
-
-        # log.info("Measuring inputs:\n"
-        #          f"{json_style(self.current['inputs'])}")
-
-        # self.client_manager.sample_point(self.current["inputs"])  # send the imputs to control system servers
         
         log.info("Measuring inputs:\n"
                     f"{json_style(inputs)}")
 
         self.client_manager.sample_point(inputs)  # send the imputs to control system servers
-
+        self.commanded_inputs = inputs            # what was asked to the motors 
 
     def on_motor_position_update(self, address: str, positions: dict):
         # update the motor mask
@@ -192,7 +187,7 @@ class Brain(QObject):
         if not self.waiting or not self.motion_pending:
             return
 
-        target = self.current["inputs"]
+        target = self.commanded_inputs
 
         if self._motors_match_target(address, positions, target):
             log.info("Motors reached target. Starting measurement phase.")
@@ -210,6 +205,9 @@ class Brain(QObject):
             return False
         
         for c, t in zip(current_positions, target_positions):
+            if t is None:
+                continue
+            
             if abs(c - t) > self.tolerance:
                 return False
 
@@ -352,7 +350,6 @@ class Brain(QObject):
             return
 
         self.motors[address][index - 1] = {"enabled": enabled, "position": position}
-        log.info(f"Motooooors = {self.motors}")
 
 
     def register_motor_server(self, address: str, freedom: int):
