@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon
+from laplace_log import log
 
 
 class ServerItemWidget(QWidget):
@@ -19,6 +20,7 @@ class ServerItemWidget(QWidget):
     '''
     
     connection_changed = pyqtSignal(str, bool)  # address, connected
+    value_changed = pyqtSignal(int) # shot number
     
     def __init__(self, 
                  address: str,
@@ -81,7 +83,7 @@ class ServerItemWidget(QWidget):
         # value if needed
         self.is_value = is_value
         if is_value:
-            self.value_label = QLabel('0')
+            self.value_label = QLabel('-1')
             layout.addWidget(self.value_label)
 
         # last check
@@ -156,5 +158,14 @@ class ServerItemWidget(QWidget):
     
 
     def set_value(self, value: int) -> None:
-        if self.is_value:
-            self.value_label.setText(f"{value}")
+        if not self.is_value:
+            return
+        
+        current_value = int(self.value_label.text())
+
+        if value != current_value:                  # if the value is different
+            self.value_label.setText(f"{value}")    # update the value
+            
+            if current_value != -1:               # if it's not initialization
+                log.info(f"Shot number changed from {current_value} to {value} in {self.address}.")
+                self.value_changed.emit(value)      # emit the signal

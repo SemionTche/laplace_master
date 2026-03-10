@@ -242,6 +242,11 @@ class MasterWindow(QMainWindow):
             self.brain.set_motor_enabled
         )
 
+        # when the shot number is modified, try to sample the next point
+        self.laser_panel.shot_changed.connect(
+            lambda shot_number: self.brain._next(next_in_queue=0)
+        )
+
 
     def route_server(self, address: str) -> None:
         '''
@@ -356,6 +361,10 @@ class MasterWindow(QMainWindow):
 
         elif device_type == DEVICE_SHOT:
             self.laser_panel.set_shot_value(address, data)
+            # try:
+            #     self.brain._next()
+            # except Exception as e:
+            #     log.error(f"Error: when giving the next task to the brain.")
 
         elif device_type == DEVICE_CAMERA:
             self.brain.on_measurement(address, data)

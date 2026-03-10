@@ -83,7 +83,7 @@ class Brain(QObject):
         self.current = None
         self.waiting = False
         log.info("The Brain suggestions were cleared.")
-        self.queue_updated.emit(self.suggestions, self.obj_spec)
+        # self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # log.info("New optimization data received:\n"
         #         f"{json_style(data)}")
@@ -111,7 +111,7 @@ class Brain(QObject):
                  f"{json_style(self.suggestions)}")
         self.queue_updated.emit(self.suggestions, self.obj_spec)
         
-        self._next()  # provide the next point to the control system
+        # self._next()  # provide the next point to the control system
 
 
     def _next(self, next_in_queue: int | None=None) -> None:
@@ -133,7 +133,7 @@ class Brain(QObject):
         # unless we explicitly ask for an element in the suggestions
         if not (self.motor_control_enabled or next_in_queue is not None):
             return
-        
+
         if not self.suggestions:                        # if there is no suggestion
             log.info("No suggestion available.")        # send the results
             return                                      # get out of the function
@@ -299,10 +299,12 @@ class Brain(QObject):
 
         self.queue_updated.emit(self.suggestions, self.obj_spec)
 
-        if self.suggestions:
-            self._next()
-        else:
-            self._send_results()  # Batch finished
+        # if self.suggestions:
+        #     self._next()
+        # else:
+        #     self._send_results()  # Batch finished
+        if not self.suggestions:
+            self._send_results()
 
 
     def _send_results(self) -> None:
@@ -334,8 +336,8 @@ class Brain(QObject):
         # set the motor control
         self.motor_control_enabled = enabled
         
-        if enabled:         # if motors can be drive
-            self._next()    # get the next sample
+        # if enabled:         # if motors can be drive
+        #     self._next()    # get the next sample
 
 
     def set_motor_enabled(self, 

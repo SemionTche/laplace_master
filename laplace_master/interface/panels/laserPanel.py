@@ -14,6 +14,7 @@ from ..widgets import ShotNumberWidget, ServerItemWidget
 class LaserPanel(QWidget):
 
     server_connection_changed = pyqtSignal(str, bool)
+    shot_changed = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -46,7 +47,7 @@ class LaserPanel(QWidget):
         self.disconnect_button = QPushButton("Connect / Disconnect")
         self.disconnect_button.clicked.connect(self.on_disconnect)
         self.main_layout.addWidget(self.disconnect_button)
-        
+
 
     def add_shot_number(self, address: str, name: str) -> None:
         widget = ShotNumberWidget(
@@ -56,6 +57,7 @@ class LaserPanel(QWidget):
         )
         widget.enable_selection(False)
         widget.connection_changed.connect(self._on_server_connection_changed)
+        widget.value_changed.connect(self._emit_shot_number)
 
         self.shot_number_layout.addWidget(widget)
         self.server_widgets[address] = widget
@@ -144,6 +146,10 @@ class LaserPanel(QWidget):
                 else:
                     widget.toggle_connection_state()  # this emits server_connection_changed
     
+
+    def _emit_shot_number(self, value: int) -> None:
+        self.shot_changed.emit(value)
+
 
     def update_server_last_msg(self, address: str) -> None:
         '''

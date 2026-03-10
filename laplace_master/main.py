@@ -14,6 +14,8 @@ logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 # project
 from interface.masterWindow import MasterWindow
 
+# from utils import uncaught_exceptions
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
