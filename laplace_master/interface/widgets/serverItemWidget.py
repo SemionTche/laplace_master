@@ -22,7 +22,8 @@ class ServerItemWidget(QWidget):
     
     def __init__(self, 
                  address: str,
-                 name: str = "Unkown"):
+                 name: str = "Unkown",
+                 is_value: bool=False):
         '''
         Initialization of the 'ServerItemWidget' class.
         This class is made to build a widget displaying
@@ -77,10 +78,20 @@ class ServerItemWidget(QWidget):
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.name_label, stretch=1)
 
+        # value if needed
+        self.is_value = is_value
+        if is_value:
+            self.value_label = QLabel('0')
+            layout.addWidget(self.value_label)
+
         # last check
         self.last_check_label = QLabel(self._current_time())
         self.last_check_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.last_check_label, stretch=1)
+
+        self.name_label.setMaximumHeight(20)
+        self.last_check_label.setMaximumHeight(20)
+        self.address_label.setMaximumHeight(20)
 
 
     def _current_time(self) -> str:
@@ -139,6 +150,11 @@ class ServerItemWidget(QWidget):
         self.last_check_label.setText(self._current_time())
 
 
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> None:
         '''Set the name of the server.'''
         self.name_label.setText(name)
+    
+
+    def set_value(self, value: int) -> None:
+        if self.is_value:
+            self.value_label.setText(f"{value}")
