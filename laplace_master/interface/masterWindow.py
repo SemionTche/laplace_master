@@ -244,7 +244,7 @@ class MasterWindow(QMainWindow):
 
         # when the shot number is modified, try to sample the next point
         self.laser_panel.shot_changed.connect(
-            lambda shot_number: self.brain._next(next_in_queue=0)
+            lambda shot_number: self.brain._next(next_in_queue=None)
         )
 
 

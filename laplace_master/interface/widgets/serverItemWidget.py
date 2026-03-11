@@ -166,6 +166,8 @@ class ServerItemWidget(QWidget):
         if value != current_value:                  # if the value is different
             self.value_label.setText(f"{value}")    # update the value
             
-            if current_value != -1:               # if it's not initialization
-                log.info(f"Shot number changed from {current_value} to {value} in {self.address}.")
-                self.value_changed.emit(value)      # emit the signal
+            if current_value == -1 or value == -1:  # if it's not initialization or there is an error
+                return                              # avoid signal
+                         
+            log.info(f"Shot number changed from {current_value} to {value} in {self.address}.")
+            self.value_changed.emit(value)      # emit the signal
