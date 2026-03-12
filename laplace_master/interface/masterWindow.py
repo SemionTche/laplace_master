@@ -226,7 +226,10 @@ class MasterWindow(QMainWindow):
         )
             # use the brain next element in queue when button next queue clicked
         self.optimizationPanel.next_sample_clicked.connect(
-            self.brain._next
+            lambda position_in_queue: self.brain._next(
+                self.laser_panel.shot_number, 
+                position_in_queue
+            )
         )
 
         self.brain.queue_updated.connect(
@@ -244,7 +247,10 @@ class MasterWindow(QMainWindow):
 
         # when the shot number is modified, try to sample the next point
         self.laser_panel.shot_changed.connect(
-            lambda shot_number: self.brain._next(next_in_queue=None)
+            lambda shot_number: self.brain._next(
+                shot_number=shot_number, 
+                next_in_queue=None
+            )
         )
 
 

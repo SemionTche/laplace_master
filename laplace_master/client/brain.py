@@ -51,6 +51,7 @@ class Brain(QObject):
             default_value=1e-4,
             type=float
         )
+        self.shot_number = -1
 
         log.info("Brain loaded.")
 
@@ -114,7 +115,7 @@ class Brain(QObject):
         # self._next()  # provide the next point to the control system
 
 
-    def _next(self, next_in_queue: int | None=None) -> None:
+    def _next(self, shot_number: int, next_in_queue: int | None=None) -> None:
         '''
         Start evaluation of the next suggested sample if allowed.
 
@@ -140,6 +141,8 @@ class Brain(QObject):
 
         if next_in_queue is None:
             next_in_queue = 0
+
+        self.shot_number = shot_number  # update the shot number
 
         self.current = self.suggestions.pop(next_in_queue)  # get the current point to sample and pop it from the suggestions
         self.queue_updated.emit(self.suggestions, self.obj_spec)
@@ -292,11 +295,12 @@ class Brain(QObject):
             "outputs": self.current_measurements,
             "batch": self.current["batch"],
             "candidate": self.current["candidate"],
+            "shot_number": self.shot_number
         })
 
         self.current = None
         self.waiting = False
-
+        self.shot_number = -1
         self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # if self.suggestions:

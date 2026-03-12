@@ -21,6 +21,7 @@ class LaserPanel(QWidget):
 
         self.set_up()
         self.server_widgets: dict[str, ServerItemWidget] = {}
+        self.server_shot_list: list[str] = []
         log.info("Laser panel loaded.")
         
 
@@ -50,6 +51,7 @@ class LaserPanel(QWidget):
 
 
     def add_shot_number(self, address: str, name: str) -> None:
+        self.server_shot_list.append(address)
         widget = ShotNumberWidget(
             name=name,
             address=address,
@@ -62,6 +64,13 @@ class LaserPanel(QWidget):
         self.shot_number_layout.addWidget(widget)
         self.server_widgets[address] = widget
 
+    @property
+    def shot_number(self) -> int:
+        for addr, widget in self.server_widgets.items():
+            if addr in self.server_shot_list:
+                if widget.connected:
+                    return widget.get_value()
+        return -1
 
     def set_shot_value(self, address: str, data: dict) -> None:
         widget = self.server_widgets.get(address)

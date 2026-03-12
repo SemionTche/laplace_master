@@ -171,3 +171,10 @@ class ServerItemWidget(QWidget):
                          
             log.info(f"Shot number changed from {current_value} to {value} in {self.address}.")
             self.value_changed.emit(value)      # emit the signal
+
+
+    def get_value(self) -> int:
+        if self.is_value:
+            return int(self.value_label.text())
+        else:
+            return -1
