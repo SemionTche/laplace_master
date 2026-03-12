@@ -89,7 +89,7 @@ class OptimizationPanel(QWidget):
 
         # Since a server exists, enable the motor checkbox immediately
         self.motor_checkbox.setEnabled(True)
-        self.next_sample_button.setEnabled(True)
+        # self.next_sample_button.setEnabled(True)
 
 
     def on_next_sample(self) -> None:

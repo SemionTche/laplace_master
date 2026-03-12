@@ -51,6 +51,7 @@ class Brain(QObject):
             default_value=1e-4,
             type=float
         )
+        self.shot_number = -1
 
         log.info("Brain loaded.")
 
@@ -83,7 +84,7 @@ class Brain(QObject):
         self.current = None
         self.waiting = False
         log.info("The Brain suggestions were cleared.")
-        self.queue_updated.emit(self.suggestions, self.obj_spec)
+        # self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # log.info("New optimization data received:\n"
         #         f"{json_style(data)}")
@@ -111,10 +112,10 @@ class Brain(QObject):
                  f"{json_style(self.suggestions)}")
         self.queue_updated.emit(self.suggestions, self.obj_spec)
         
-        self._next()  # provide the next point to the control system
+        # self._next()  # provide the next point to the control system
 
 
-    def _next(self, next_in_queue: int | None=None) -> None:
+    def _next(self, shot_number: int, next_in_queue: int | None=None) -> None:
         '''
         Start evaluation of the next suggested sample if allowed.
 
@@ -133,13 +134,15 @@ class Brain(QObject):
         # unless we explicitly ask for an element in the suggestions
         if not (self.motor_control_enabled or next_in_queue is not None):
             return
-        
+
         if not self.suggestions:                        # if there is no suggestion
             log.info("No suggestion available.")        # send the results
             return                                      # get out of the function
 
         if next_in_queue is None:
             next_in_queue = 0
+
+        self.shot_number = shot_number  # update the shot number
 
         self.current = self.suggestions.pop(next_in_queue)  # get the current point to sample and pop it from the suggestions
         self.queue_updated.emit(self.suggestions, self.obj_spec)
@@ -292,17 +295,20 @@ class Brain(QObject):
             "outputs": self.current_measurements,
             "batch": self.current["batch"],
             "candidate": self.current["candidate"],
+            "shot_number": self.shot_number
         })
 
         self.current = None
         self.waiting = False
-
+        self.shot_number = -1
         self.queue_updated.emit(self.suggestions, self.obj_spec)
 
-        if self.suggestions:
-            self._next()
-        else:
-            self._send_results()  # Batch finished
+        # if self.suggestions:
+        #     self._next()
+        # else:
+        #     self._send_results()  # Batch finished
+        if not self.suggestions:
+            self._send_results()
 
 
     def _send_results(self) -> None:
@@ -334,8 +340,8 @@ class Brain(QObject):
         # set the motor control
         self.motor_control_enabled = enabled
         
-        if enabled:         # if motors can be drive
-            self._next()    # get the next sample
+        # if enabled:         # if motors can be drive
+        #     self._next()    # get the next sample
 
 
     def set_motor_enabled(self, 

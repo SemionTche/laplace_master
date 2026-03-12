@@ -68,17 +68,6 @@ class ConnectionPanel(QWidget):
         log.debug(f"Connection Panel '{title}' loaded.")
 
 
-    def update_server_name(self, 
-                           address: str,
-                           newName: str) -> None:
-        '''
-        Helper to change the name of the server.
-        '''
-        widget = self.server_widgets.get(address)  # get the widget from the dictionary
-        if widget:                                 # if there is a widget
-            widget.set_name(newName)               # change the name
-
-
     def update_server_last_msg(self, address: str):
         '''
         Helper to change the last time a message was received.

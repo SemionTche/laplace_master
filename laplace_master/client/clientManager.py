@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from laplace_log import log
-from laplace_server.protocol import DEVICE_GAS, DEVICE_MOTOR, DEVICE_OPT
+from laplace_server.protocol import DEVICE_OPT
 
 
 # project
@@ -27,7 +27,6 @@ class ClientManager(QObject):
     '''
     server_pinged = pyqtSignal(str, bool)           # address, alive
     server_contacted = pyqtSignal(str)              # address
-    server_identified = pyqtSignal(str, str)        # address, name
     server_data_received = pyqtSignal(str, dict)    # address, raw data
 
     def __init__(self):
@@ -181,7 +180,7 @@ class ClientManager(QObject):
 
             reply = client.get()                   # get the data stored in the server
             if reply is not None:                  # if the data is received
-                data = reply.get("payload", {}).get("data", {})    # extract the data from the reply
+                data = reply.get("payload", {}).get("data", {}) # extract the data from the reply
                 self.server_data_received.emit(address, data)   # transmit it to the control system panel
 
 

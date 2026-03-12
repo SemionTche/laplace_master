@@ -2,18 +2,17 @@
 import pathlib
 
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QLabel, 
-    QGridLayout, QVBoxLayout, QHBoxLayout, 
-    QMessageBox
+    QMainWindow, QWidget, QGridLayout, 
+    QVBoxLayout, QHBoxLayout, QMessageBox
 )
 from PyQt6.QtCore import (
-    Qt, QSettings, QTimer
+    QSettings, QTimer
 )
 from PyQt6.QtGui import QIcon
 import qdarkstyle
 from laplace_server.protocol import (
-    DEVICE_MOTOR, DEVICE_CAMERA, 
-    DEVICE_GAS, DEVICE_OPT
+    DEVICE_CAMERA, DEVICE_OPT, DEVICE_SHOT,
+    AVAILABLE_CONTROLS
 )
 from laplace_log import log
 
@@ -165,16 +164,13 @@ class MasterWindow(QMainWindow):
         )
 
         # when a server address is filled, use the route procedure
-        self.server_bar.server_added.connect(self.route_server)
+        self.server_bar.server_added.connect(
+            self.route_server
+        )
         
         # ping all servers according to the internal timer
         self.timer.timeout.connect(
             self.client_manager.ping_all
-        )
-
-        # set the diag server name
-        self.client_manager.server_identified.connect(
-            self.diagsConnectionPanel.update_server_name
         )
         
         ### every panel actions
@@ -188,6 +184,9 @@ class MasterWindow(QMainWindow):
         self.optimizationPanel.server_connection_changed.connect(
             lambda addr, state: self.client_manager.set_server_enabled(addr, state)
         )
+        self.laser_panel.server_connection_changed.connect(
+            lambda addr, state: self.client_manager.set_server_enabled(addr, state)
+        )
             # update the displaied time when a message is received
         self.client_manager.server_contacted.connect(
             self.diagsConnectionPanel.update_server_last_msg
@@ -197,6 +196,9 @@ class MasterWindow(QMainWindow):
         )
         self.client_manager.server_contacted.connect(
             self.optimizationPanel.update_server_last_msg
+        )
+        self.client_manager.server_contacted.connect(
+            self.laser_panel.update_server_last_msg
         )
             # update the server state when the client lose connection
         self.client_manager.server_pinged.connect(
@@ -208,12 +210,11 @@ class MasterWindow(QMainWindow):
         self.client_manager.server_pinged.connect(
             self.optimizationPanel.on_server_alive_changed
         )
-
-        # when data is received, from motors, update the displaied motor positions
-        self.client_manager.server_data_received.connect(
-            self.motorsConnectionPanel.update_server_data
+        self.client_manager.server_pinged.connect(
+            self.laser_panel.on_server_alive_changed
         )
 
+        # when data is received, route it to the correct panel
         self.client_manager.server_data_received.connect(
             self.route_server_data
         )
@@ -225,7 +226,10 @@ class MasterWindow(QMainWindow):
         )
             # use the brain next element in queue when button next queue clicked
         self.optimizationPanel.next_sample_clicked.connect(
-            self.brain._next
+            lambda position_in_queue: self.brain._next(
+                self.laser_panel.shot_number, 
+                position_in_queue
+            )
         )
 
         self.brain.queue_updated.connect(
@@ -239,6 +243,14 @@ class MasterWindow(QMainWindow):
         # when the motor is enabled / disabled, set the corresponding information in brain
         self.motorsConnectionPanel.motor_connection_changed.connect(
             self.brain.set_motor_enabled
+        )
+
+        # when the shot number is modified, try to sample the next point
+        self.laser_panel.shot_changed.connect(
+            lambda shot_number: self.brain._next(
+                shot_number=shot_number, 
+                next_in_queue=None
+            )
         )
 
 
@@ -303,11 +315,10 @@ class MasterWindow(QMainWindow):
                 address=info.address,
                 name=info.name or "Unknown"
             )
-            log.info(f"New diagnostic server added:\n"
-                     f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
+            log.info(f"New diagnostic server added:")
         
         # elif the device is a 'control system'
-        elif info.device == DEVICE_MOTOR or info.device == DEVICE_GAS:
+        elif info.device in AVAILABLE_CONTROLS:# info.device == DEVICE_MOTOR or info.device == DEVICE_GAS:
             # bottom left connectionPanel
             self.motorsConnectionPanel.add_server(
                 address=info.address,
@@ -323,27 +334,43 @@ class MasterWindow(QMainWindow):
                     info.address,
                     info.freedom
                 )
-            log.info(f"New control system server added:\n"
-                     f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
+            log.info(f"New control system server added:")
         
         elif info.device == DEVICE_OPT:
             self.optimizationPanel.add_server(
                 address=info.address,
                 name=info.name or "Optimization"
             )
-            log.info(f"New optimization server added:\n"
-                     f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
+            log.info(f"New optimization server added:")
+        
+        elif info.device == DEVICE_SHOT:
+            self.laser_panel.add_shot_number(
+                address=info.address,
+                name=info.name or "Shot Number"
+            )
+            log.info(f"New shot number server added:")
+        
+        log.info(f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
 
 
     def route_server_data(self, address: str, data: dict):
 
         device_type = self.client_manager.server_devices.get(address)
 
-        if device_type in [DEVICE_GAS, DEVICE_MOTOR]:
+        if device_type in AVAILABLE_CONTROLS:
+            # when data is received, from motors, update the displayed motor positions
+            self.motorsConnectionPanel.update_server_data(address, data)
             try:
-                self.brain.on_motor_position_update(address, data)
+                self.brain.on_motor_position_update(address, data)  # and brain measurement
             except Exception as e:
                 log.error(f"Error: while processing motor position update.\n{e}")
+
+        elif device_type == DEVICE_SHOT:
+            self.laser_panel.set_shot_value(address, data)
+            # try:
+            #     self.brain._next()
+            # except Exception as e:
+            #     log.error(f"Error: when giving the next task to the brain.")
 
         elif device_type == DEVICE_CAMERA:
             self.brain.on_measurement(address, data)
@@ -352,27 +379,12 @@ class MasterWindow(QMainWindow):
             self.brain.on_opt_data(address, data)
 
 
-
-    # def route_brain(self, 
-    #                 address: str, 
-    #                 data: dict,
-    #                 device: str) -> None:
-    #     '''
-    #     '''
-    #     if device == DEVICE_OPT:
-    #         self.brain.on_opt_data(address, data)
-
-    #     elif device in (DEVICE_CAMERA, DEVICE_GAS):
-    #         self.brain.on_measurement(address, data)
-
-
     def poll_optimizer(self):
         for address, device in self.client_manager.server_devices.items():
             if device == DEVICE_OPT:
                 data = self.client_manager.poll_optimizer(address)
                 if data:
                     self.brain.on_opt_data(address, data)
-
 
 
     def closeEvent(self, event) -> None:

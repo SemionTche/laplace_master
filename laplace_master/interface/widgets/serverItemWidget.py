@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 from PyQt6.QtGui import QIcon
+from laplace_log import log
 
 
 class ServerItemWidget(QWidget):
@@ -19,10 +20,12 @@ class ServerItemWidget(QWidget):
     '''
     
     connection_changed = pyqtSignal(str, bool)  # address, connected
+    value_changed = pyqtSignal(int) # shot number
     
     def __init__(self, 
                  address: str,
-                 name: str = "Unkown"):
+                 name: str = "Unkown",
+                 is_value: bool=False):
         '''
         Initialization of the 'ServerItemWidget' class.
         This class is made to build a widget displaying
@@ -77,10 +80,20 @@ class ServerItemWidget(QWidget):
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.name_label, stretch=1)
 
+        # value if needed
+        self.is_value = is_value
+        if is_value:
+            self.value_label = QLabel('-1')
+            layout.addWidget(self.value_label)
+
         # last check
         self.last_check_label = QLabel(self._current_time())
         self.last_check_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.last_check_label, stretch=1)
+
+        self.name_label.setMaximumHeight(20)
+        self.last_check_label.setMaximumHeight(20)
+        self.address_label.setMaximumHeight(20)
 
 
     def _current_time(self) -> str:
@@ -139,6 +152,29 @@ class ServerItemWidget(QWidget):
         self.last_check_label.setText(self._current_time())
 
 
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> None:
         '''Set the name of the server.'''
         self.name_label.setText(name)
+    
+
+    def set_value(self, value: int) -> None:
+        if not self.is_value:
+            return
+        
+        current_value = int(self.value_label.text())
+
+        if value != current_value:                  # if the value is different
+            self.value_label.setText(f"{value}")    # update the value
+            
+            if current_value == -1 or value == -1:  # if it's not initialization or there is an error
+                return                              # avoid signal
+                         
+            log.info(f"Shot number changed from {current_value} to {value} in {self.address}.")
+            self.value_changed.emit(value)      # emit the signal
+
+
+    def get_value(self) -> int:
+        if self.is_value:
+            return int(self.value_label.text())
+        else:
+            return -1
