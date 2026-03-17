@@ -1,6 +1,7 @@
 # libraries
 from PyQt6.QtCore import QObject, pyqtSignal
 from laplace_log import log
+from laplace_server.protocol import DEVICE_GAS, DEVICE_MOTOR
 
 # project
 from client.clientManager import ClientManager
@@ -45,14 +46,22 @@ class Brain(QObject):
         self.opt_address = "Unknown"  # Address of the OPT server
         self.motors: dict[str, list[dict]] = {}   # mask to determine which motor can move and what was the position when state changed
         
-        self.tolerance = get_from_config(
+        self.tolerance_gas = get_from_config(
             module="opt",
-            item="tolerance",
-            default_value=1e-4,
+            item="tolerance_gas",
+            default_value=1e-2,
+            type=float
+        )
+
+        self.tolerance_motors = get_from_config(
+            module="opt",
+            item="tolerance_motors",
+            default_value=1e-3,
             type=float
         )
         self.shot_number = -1
-
+        
+        log.debug(f"Tolerances loaded: tolerance gas = {self.tolerance_gas}, tolerance motors = {self.tolerance_motors}")
         log.info("Brain loaded.")
 
 
@@ -211,18 +220,15 @@ class Brain(QObject):
             if t is None:
                 continue
             
-            if abs(c - t) > self.tolerance:
-                return False
+            if self.client_manager.server_devices[address] == DEVICE_GAS:
+                if abs(c - t) <= self.tolerance_gas:
+                    return True
+            
+            elif self.client_manager.server_devices[address] == DEVICE_MOTOR:
+                if abs(c - t) <= self.tolerance_motors:
+                    return True
 
-        # for address, target_positions in target.items():
-        #     if len(current_positions) != len(target_positions):
-        #         return False
-
-        #     for c, t in zip(current_positions, target_positions):
-        #         if abs(c - t) > self.tolerance:
-        #             return False
-
-        return True
+        return False
 
 
     def on_measurement(self, 
