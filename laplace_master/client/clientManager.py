@@ -19,6 +19,7 @@ class ServerInfo:
     name: str | None
     device: str | None
     freedom : int
+    name_list : list
 
 
 class ClientManager(QObject):
@@ -75,7 +76,8 @@ class ClientManager(QObject):
                 already=True,
                 name=client.server_name,
                 device=client.server_device,
-                freedom=client.server_freedom
+                freedom=client.server_freedom,
+                name_list=client.server_name_list
             )
         
         log.info(f"Probing the server: {address}")
@@ -95,7 +97,8 @@ class ClientManager(QObject):
                 already=False,
                 name=None,
                 device=None,
-                freedom=0
+                freedom=0,
+                name_list=[]
             )
         
         self.clients[address] = client  # add the client in the dictionary
@@ -106,6 +109,7 @@ class ClientManager(QObject):
         if info_dict is not None:                            # if the server responded
             name = info_dict.get("name", "Unknown")          # get the name
             device = info_dict.get("device", "Unknown")      # the device
+            name_list = info_dict.get("name_list", [])       # the name list of the device belonging to that server
             try:                                             # the freedom (int format)
                 freedom = int(info_dict.get("freedom", 0))
             except (TypeError, ValueError):
@@ -119,7 +123,8 @@ class ClientManager(QObject):
                 already=False,
                 name=name, 
                 device=device, 
-                freedom=freedom
+                freedom=freedom,
+                name_list=name_list
             )
 
         # else there is a problem
@@ -131,7 +136,8 @@ class ClientManager(QObject):
             already=False,
             name=None, 
             device=None, 
-            freedom=0
+            freedom=0,
+            name_list=[]
         )
 
 

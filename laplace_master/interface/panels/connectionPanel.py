@@ -105,8 +105,10 @@ class ConnectionPanel(QWidget):
         self.server_widgets[address] = widget               # store widget
 
 
-    def add_server_controls(self, address: str,
-                            freedom: int) -> None:
+    def add_server_controls(self, 
+                            address: str,
+                            freedom: int,
+                            name_list: list[str]) -> None:
         '''
         Add a control line in the ConnectionPanel.
 
@@ -117,13 +119,17 @@ class ConnectionPanel(QWidget):
                 freedom: (int)
                     the server degree of freedom.
                     (number of setable elements)
+                
+                name_list: (list[str])
+                    the name list of the devices belonging to
+                    the server.
         '''
         self.server_control_widgets[address] = []
 
         for i in range(freedom):
             item = QListWidgetItem(self.server_list_widget)
 
-            widget = ServerControlWidget(address, i + 1)  # numbering starts at 1
+            widget = ServerControlWidget(address, i + 1, name_list[i])  # numbering starts at 1
             widget.enable_selection(False)                # controls are NOT selectable by default
             widget.motor_connection.connect(              # when a motor connection is changed
                 self.on_motor_connection_changed          # use the corresponding function

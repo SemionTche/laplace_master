@@ -22,7 +22,7 @@ class ServerControlWidget(QWidget):
     '''
     motor_connection = pyqtSignal(str, int, bool, float)
 
-    def __init__(self, address: str, motor_index: int):
+    def __init__(self, address: str, motor_index: int, name: str="Unknown"):
         '''
         Initialization of the 'ServerControlWidget' class.
 
@@ -36,11 +36,14 @@ class ServerControlWidget(QWidget):
                 motor_index: (int)
                     Index of the motor (degree of freedom) handled
                     by the server.
+                
+                name: (str)
+                    the name of the device
         '''        
         super().__init__() # heritage from QWidget
 
         self.address = address
-        self.name = "Motor"
+        self.name = name
         self.motor_index = motor_index
         self.connected = True  # connection flag
 
@@ -71,7 +74,7 @@ class ServerControlWidget(QWidget):
         layout.addWidget(self.state_icon)
 
         # label
-        self.label = QLabel(f"{self.name} {motor_index}")
+        self.label = QLabel(f"{self.name}")
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.label, stretch=1)
 
@@ -114,7 +117,7 @@ class ServerControlWidget(QWidget):
         icon = self.connected_icon if self.connected else self.disconnected_icon
         self.state_icon.setPixmap(icon.pixmap(16, 16))
 
-        log.debug(f"{self.name} {self.motor_index} from {self.address} {"enabled" if self.is_selected() else "disabled"}.")
+        log.debug(f"{self.name} (idx {self.motor_index}) from {self.address} {"enabled" if self.is_selected() else "disabled"}.")
         self.motor_connection.emit(
             str(self.address), 
             int(self.motor_index), 

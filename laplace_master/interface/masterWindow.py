@@ -331,8 +331,9 @@ class MasterWindow(QMainWindow):
                     info.freedom
                 )
                 self.motorsConnectionPanel.add_server_controls(
-                    info.address,
-                    info.freedom
+                    address=info.address,
+                    freedom=info.freedom,
+                    name_list=info.name_list
                 )
             log.info(f"New control system server added:")
         

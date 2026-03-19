@@ -50,6 +50,7 @@ class MasterClient:
         self.server_name = "Unknown"
         self.server_device = "Unknown"
         self.server_freedom = 0
+        self.server_name_list = []
 
 
     def set_connected(self, enabled: bool) -> None:
@@ -168,6 +169,7 @@ class MasterClient:
             self.server_name = payload.get("name", "Unknown")
             self.server_device = payload.get("device", "Unknown")
             self.server_freedom = int(payload.get("freedom", 0))
+            self.server_name_list = list(payload.get("name_list", 0))
 
             return payload
 
