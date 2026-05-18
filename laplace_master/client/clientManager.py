@@ -19,7 +19,7 @@ class ServerInfo:
     name: str | None
     device: str | None
     freedom : int
-    name_list : list
+    name_list: list
 
 
 class ClientManager(QObject):
@@ -77,7 +77,7 @@ class ClientManager(QObject):
                 name=client.server_name,
                 device=client.server_device,
                 freedom=client.server_freedom,
-                name_list=client.server_name_list
+                name_list=[]
             )
         
         log.info(f"Probing the server: {address}")
@@ -109,7 +109,7 @@ class ClientManager(QObject):
         if info_dict is not None:                            # if the server responded
             name = info_dict.get("name", "Unknown")          # get the name
             device = info_dict.get("device", "Unknown")      # the device
-            name_list = info_dict.get("name_list", [])       # the name list of the device belonging to that server
+            name_list = info_dict.get("name_list", [])
             try:                                             # the freedom (int format)
                 freedom = int(info_dict.get("freedom", 0))
             except (TypeError, ValueError):
@@ -273,6 +273,7 @@ class ClientManager(QObject):
             positions = {}
 
             for position_index, value in enumerate(values):
+                # print(f"position_index = {position_index}, value = {value}")
                 if value is None:   # ignore the None values
                     continue
 
@@ -281,7 +282,7 @@ class ClientManager(QObject):
             # if there is no position for this address
             if not positions:
                 continue      # ignore it
-
+            print(f"positions send = {positions}")
             client.set(positions)   # send the positions to the server
 
 
