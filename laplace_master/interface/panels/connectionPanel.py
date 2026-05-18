@@ -9,6 +9,7 @@ from PyQt6.QtCore import pyqtSignal
 # project
 from interface.widgets import ServerItemWidget
 from interface.widgets import ServerControlWidget
+from utils.json_encoder import json_style
 
 
 class ConnectionPanel(QWidget):
@@ -108,7 +109,7 @@ class ConnectionPanel(QWidget):
     def add_server_controls(self, 
                             address: str,
                             freedom: int,
-                            name_list: list[str]) -> None:
+                            name_list: list) -> None:
         '''
         Add a control line in the ConnectionPanel.
 
@@ -120,15 +121,18 @@ class ConnectionPanel(QWidget):
                     the server degree of freedom.
                     (number of setable elements)
                 
-                name_list: (list[str])
-                    the name list of the devices belonging to
-                    the server.
+                name_list: (list)
+                    the name list of the elements
+                    belonging to the server
         '''
         self.server_control_widgets[address] = []
-
+        
+        log.info(f"The server {address} controls are:\n"
+                 f"{json_style(name_list)}"
+        )
+        
         for i in range(freedom):
             item = QListWidgetItem(self.server_list_widget)
-
             widget = ServerControlWidget(address, i + 1, name_list[i])  # numbering starts at 1
             widget.enable_selection(False)                # controls are NOT selectable by default
             widget.motor_connection.connect(              # when a motor connection is changed
@@ -274,9 +278,14 @@ class ConnectionPanel(QWidget):
         '''
         Transmit data to ServerControlWidget.
         '''
-        list_widgets = self.server_control_widgets.get(address)
-        if not list_widgets:
-            return
+        if data:
+            list_widgets = self.server_control_widgets.get(address)
+            if not list_widgets:
+                return
 
-        for i, widget in enumerate(list_widgets):
-            widget.update_positions(data["positions"][i], data["unit"])
+            for i, widget in enumerate(list_widgets):
+                try:
+                    widget.update_positions(data["positions"][i], data["unit"])
+                except Exception as e:
+                    log.error(f"Exception occured in ConnectionPanel update_server_data: {e}\n"
+                              f"The data was: {data}")
