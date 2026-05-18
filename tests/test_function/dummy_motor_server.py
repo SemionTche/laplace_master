@@ -34,6 +34,9 @@ if __name__ == "__main__":
         name="dummy_motor"
     )
     print(server.address_for_client)
+    
+    server.set_name_list(["Direction x", "Direction Y"])
+    print(server.name_list)
 
     # callbacks
     def on_position_changed(positions):
