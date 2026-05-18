@@ -65,7 +65,17 @@ class MasterWindow(QMainWindow):
 
         self.opt_timer = QTimer()
         self.opt_timer.timeout.connect(self.poll_optimizer)
-        self.opt_timer.start(1000)  # 1 second, configurable
+        self.opt_timer.start(ping_time_ms)
+
+
+        brain_time_ms = self.settings.value(
+            "server/brain_time_ms", 
+            defaultValue=3000, 
+            type=int
+        )
+        self.brain_timer = QTimer()
+        self.brain_timer.timeout.connect(self.brain.tick)
+        self.brain_timer.start(brain_time_ms)
         
         self.actions()  # signals
 
@@ -225,12 +235,12 @@ class MasterWindow(QMainWindow):
             self.brain.set_motor_control
         )
             # use the brain next element in queue when button next queue clicked
-        self.optimizationPanel.next_sample_clicked.connect(
-            lambda position_in_queue: self.brain._next(
-                self.laser_panel.shot_number, 
-                position_in_queue
-            )
-        )
+        # self.optimizationPanel.next_sample_clicked.connect(
+        #     lambda position_in_queue: self.brain._next(
+        #         self.laser_panel.shot_number, 
+        #         position_in_queue
+        #     )
+        # )
 
         self.brain.queue_updated.connect(
             self.optimizationPanel.queue_viewer.set_queue
@@ -246,10 +256,16 @@ class MasterWindow(QMainWindow):
         )
 
         # when the shot number is modified, try to sample the next point
+        # self.laser_panel.shot_changed.connect(
+        #     lambda shot_number: self.brain._next(
+        #         shot_number=shot_number, 
+        #         next_in_queue=None
+        #     )
+        # )
         self.laser_panel.shot_changed.connect(
-            lambda shot_number: self.brain._next(
+            lambda shot_number: self.brain.on_shot(
                 shot_number=shot_number, 
-                next_in_queue=None
+                # next_in_queue=None
             )
         )
 
@@ -374,6 +390,7 @@ class MasterWindow(QMainWindow):
             #     log.error(f"Error: when giving the next task to the brain.")
 
         elif device_type == DEVICE_CAMERA:
+            # print(f"data from cam = {data}")
             self.brain.on_measurement(address, data)
 
         elif device_type == DEVICE_OPT:
