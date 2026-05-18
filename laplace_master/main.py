@@ -6,15 +6,14 @@ from PyQt6.QtWidgets import QApplication
 from laplace_log import LoggerLHC, log
 from laplace_server.protocol import LOGGER_NAME
 
-LoggerLHC("laplace.master", file_level="debug", console_level="info")
+LoggerLHC("laplace.master", log_root="", file_level="debug", console_level="info")
 log.info("Starting MasterWindow...")
 
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
+from laplace_log import uncaught_exception
 
 # project
 from interface.masterWindow import MasterWindow
-
-# from utils import uncaught_exceptions
 
 
 if __name__ == "__main__":
