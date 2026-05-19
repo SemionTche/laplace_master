@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QSpinBox, QVBoxLayout, QHBoxLayout, QLineEdit
 )
-from PyQt6.QtCore import Qt
 
 from laplace_server.server_lhc import ServerLHC
 from laplace_server.protocol import DEVICE_SHOT
@@ -20,8 +19,8 @@ LHC_ADDRESS = "tcp://*:7892"
 class DummyShot(QWidget):
     def __init__(self):
         super().__init__()
-
-        self.setWindowTitle("Dummy Shot Device")
+        self.name = "dummy_shot_server"
+        self.setWindowTitle("Dummy Shot Server")
         self.resize(360, 140)
 
         self.shot_number = 0
@@ -30,7 +29,7 @@ class DummyShot(QWidget):
         self.setup_zmq()
         self.setup_lhc()
 
-    # ---------------- UI ----------------
+
     def setup_ui(self):
 
         label = QLabel("Shot number")
@@ -41,12 +40,11 @@ class DummyShot(QWidget):
         self.button = QPushButton("test trig")
         self.button.clicked.connect(self.trigger_shot)
 
+        # addresses
         HOST_IP = sock.gethostbyname(sock.gethostname())
-
         self.pub_address = QLineEdit(f"tcp://{HOST_IP}:{PUB_PORT}")
         self.pub_address.setReadOnly(True)
-
-        self.lhc_address = QLineEdit(f"tcp://{HOST_IP}:7892")
+        self.lhc_address = QLineEdit(f"tcp://{HOST_IP}:{LHC_ADDRESS}")
         self.lhc_address.setReadOnly(True)
 
         layout = QVBoxLayout()
@@ -66,7 +64,7 @@ class DummyShot(QWidget):
 
         self.setLayout(layout)
 
-    # ---------------- ZMQ ----------------
+    ### ZMQ
     def setup_zmq(self):
         self.context = zmq.Context()
 
@@ -79,7 +77,7 @@ class DummyShot(QWidget):
 
         time.sleep(0.5)  # IMPORTANT
 
-    # ---------------- LHC ----------------
+    ### LHC
     def setup_lhc(self):
         self.server_lhc = ServerLHC(
             name="Dummy Shot Server",
@@ -91,13 +89,14 @@ class DummyShot(QWidget):
         self.server_lhc.start()
         self.server_lhc.set_data({"shot_number": self.shot_number})
 
-    # ---------------- Trigger ----------------
+    ### Trigger
     def trigger_shot(self):
         self.shot_number += 1
         self.shot_box.setValue(self.shot_number)
 
         self.publish()
         self.update_lhc()
+
 
     def publish(self):
         msg = {
@@ -110,11 +109,13 @@ class DummyShot(QWidget):
 
         print("SHOT:", self.shot_number)
 
+
     def update_lhc(self):
         self.server_lhc.set_data({
             "shot_number": self.shot_number,
             "timestamp": time.strftime("%Y%m%d_%H%M%S"),
         })
+
 
     def closeEvent(self, event):
         self.server_lhc.stop()
