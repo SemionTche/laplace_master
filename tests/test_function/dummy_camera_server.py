@@ -22,7 +22,7 @@ SHOT_SUB_ADDRESS = "tcp://147.250.140.65:6009"
 class DummyCamera(QWidget):
     def __init__(self):
         super().__init__()
-
+        self.name = "dummy_camera"
         self.setWindowTitle("Dummy Camera")
         self.resize(300, 120)
 
@@ -37,12 +37,15 @@ class DummyCamera(QWidget):
         self.thread = threading.Thread(target=self.loop, daemon=True)
         self.thread.start()
 
-    # ---------------- UI ----------------
-    def setup_ui(self):
+
+    def setup_ui(self) -> None:
+        """
+        Set the ui widgets.
+        """
         self.setWindowTitle("Dummy Camera")
         self.resize(360, 220)
 
-        # ---------------- Addresses ----------------
+        ### Addresses
         self.sub_address = QLineEdit(SHOT_SUB_ADDRESS)
         self.sub_address.setReadOnly(True)
 
@@ -52,30 +55,27 @@ class DummyCamera(QWidget):
         self.lhc_address = QLineEdit(CAMERA_ADDRESS)
         self.lhc_address.setReadOnly(True)
 
-        # ---------------- Live values ----------------
+        ### Objective names
+        self.obj1_name = QLineEdit("electron_charge")
+        self.obj2_name = QLineEdit("electron_energy_mean")
+
+        self.obj1_name.setPlaceholderText("obj1 key")
+        self.obj2_name.setPlaceholderText("obj2 key")
+
+        ### Live values
         self.shot_label = QLabel("Shot: -")
         self.motor_label = QLabel("Motor: -")
         self.value_label = QLabel("Values: -")
         self.time_label = QLabel("Time: -")
 
-        # ---------------- Style (simple debug look) ----------------
-        for w in [self.sub_address, self.motor_address, self.lhc_address]:
-            w.setStyleSheet("""
-                QLineEdit {
-                    background-color: #2b2b2b;
-                    color: #00cc66;
-                    font-family: monospace;
-                    padding: 3px;
-                }
-            """)
-
+        # font size
         self.setStyleSheet("""
             QLabel {
                 font-size: 13px;
             }
         """)
 
-        # ---------------- Layout ----------------
+        ### Layout
         layout = QVBoxLayout()
 
         layout.addWidget(QLabel("SHOT SUB"))
@@ -84,8 +84,14 @@ class DummyCamera(QWidget):
         layout.addWidget(QLabel("MOTOR"))
         layout.addWidget(self.motor_address)
 
-        layout.addWidget(QLabel("LHC SERVER"))
+        layout.addWidget(QLabel("CAMERA"))
         layout.addWidget(self.lhc_address)
+
+        layout.addSpacing(10)
+
+        layout.addWidget(QLabel("Objective names"))
+        layout.addWidget(self.obj1_name)
+        layout.addWidget(self.obj2_name)
 
         layout.addSpacing(10)
 
@@ -101,58 +107,71 @@ class DummyCamera(QWidget):
         self.motor_label.setText(f"Motor: {motor}")
         self.time_label.setText(f"Time: {timestamp}")
 
-    # ---------------- ZMQ ----------------
+    ### ZMQ
     def setup_zmq(self):
+        """
+        Creates the ZMQ context
+        """
         self.ctx = zmq.Context()
 
+        # sub to shot server
         self.sub = self.ctx.socket(zmq.SUB)
         self.sub.connect(SHOT_SUB_ADDRESS)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, "SHOOT")
 
-    # ---------------- LHC ----------------
+    ### LHC
     def setup_lhc(self):
+        """
+        Create the LHC server (request / reply)
+        """
         self.server = ServerLHC(
             address=CAMERA_ADDRESS,
             freedom=0,
             device=DEVICE_CAMERA,
             data={},
-            name="dummy_camera",
+            name=self.name,
             empty_data_after_get=True,
         )
         self.server.start()
 
-    # ---------------- Motor ----------------
-    def get_motor(self):
+    ### Motor
+    def get_motor(self) -> list:
+        """
+        Get the motor value.
+        """
         sock = self.ctx.socket(zmq.REQ)
         sock.connect(MOTOR_ADDRESS)
 
-        sock.send_json(make_get_request("camera", "dummy_motor"))
+        sock.send_json(make_get_request(sender=self.name, target="dummy_motor"))
         reply = sock.recv_json()
 
         sock.close()
 
         return reply["payload"]["data"]["positions"]
 
-    # ---------------- Measure ----------------
-    def measure(self, shot):
-        x1, x2 = self.get_motor()
+    ### compute test function
+    def measure(self, shot: int):
+        """
+        Sample the test function.
+        """
+        x1, x2 = self.get_motor()  # get the motor positions
 
         x1 = torch.tensor(x1)
         x2 = torch.tensor(x2)
 
-        r = target_function(x1, x2)
+        r = target_function(x1, x2)  # get the test function value
 
-        self.value_label.setText(f"Value: {r[:, 0].tolist()} charge | {r[:, 1].tolist()} energy")
+        self.value_label.setText(f"Value: {r[:, 0].item()} charge | {r[:, 1].item()} energy")
 
         return {
-            "shot_number": shot,
+            "shot_number": shot, # completed shot
             "motor": [x1.item(), x2.item()],
-            "charge": r[:, 0].tolist(),
-            "energy": r[:, 1].tolist(),
+            self.obj1_name.text(): r[:, 0].item(),
+            self.obj2_name.text(): r[:, 1].item(),
             "time": time.strftime("%H:%M:%S"),
         }
 
-    # ---------------- Loop ----------------
+    ### Loop
     def loop(self):
         print("Camera listening...")
 
@@ -161,32 +180,36 @@ class DummyCamera(QWidget):
                 topic = self.sub.recv_string()
                 event = self.sub.recv_json()
 
-                shot = event["number"]
+                shot = event["number"]                  # next shot to come
+                completed_shot = shot - 1               # shot that just been completed
+                self.last_shot = completed_shot         # store last completed shot
 
-                data = self.measure(shot)
-                self.server.set_data(data)
+                time.sleep(0.2)  # camera processing
 
-                self.update_ui(
-                    shot,
+                data = self.measure(completed_shot)    # compute the test function
+                self.server.set_data(data)             # set the values in the LHC server
+
+                self.update_ui(                        # update the interface
+                    completed_shot,
                     data["motor"],
                     data["time"]
                 )
 
-                self.last_shot = shot
-
-                print("Camera triggered:", shot)
+                print("Camera triggered:", completed_shot)
 
             except Exception as e:
-                if self.running:
-                    print("camera error:", e)
+                if self.running:                # if the thread is still running
+                    print("camera error:", e)   # print the error
 
 
     def closeEvent(self, event):
         self.running = False
-        time.sleep(0.1)
-        self.server.stop()
+        time.sleep(0.1)       # let the thread the time to close
+        
+        self.server.stop()    # close each thread
         self.sub.close()
         self.ctx.term()
+        
         event.accept()
 
 
