@@ -89,6 +89,7 @@ class DummyShot(QWidget):
             data={}
         )
         self.server_lhc.start()
+        self.server_lhc.set_data({"shot_number": self.shot_number})
 
     # ---------------- Trigger ----------------
     def trigger_shot(self):
