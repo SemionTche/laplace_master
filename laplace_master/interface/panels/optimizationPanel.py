@@ -20,6 +20,7 @@ class OptimizationPanel(QWidget):
     server_connection_changed = pyqtSignal(str, bool)
     motor_control_changed = pyqtSignal(bool)
     next_sample_clicked = pyqtSignal(int)
+    arm_changed = pyqtSignal(bool)
 
     def __init__(self, title="Optimization"):
         super().__init__()
@@ -56,6 +57,14 @@ class OptimizationPanel(QWidget):
         self.motor_checkbox.toggled.connect(self.motor_control_changed)
         self.hbox.addWidget(self.motor_checkbox)
 
+        self.arm_checkbox = QCheckBox("Brain armed")
+        self.arm_checkbox.setEnabled(False)
+        self.arm_checkbox.toggled.connect(
+            lambda enabled: log.info("Brain armed.") if enabled else log.info("Brain unarmed.") 
+        )
+        self.arm_checkbox.toggled.connect(self.arm_changed)
+        self.hbox.addWidget(self.arm_checkbox)
+
         # Next in queue button
         self.next_sample_button = QPushButton("Next sample")
         self.next_sample_button.setEnabled(False)
@@ -89,6 +98,7 @@ class OptimizationPanel(QWidget):
 
         # Since a server exists, enable the motor checkbox immediately
         self.motor_checkbox.setEnabled(True)
+        self.arm_checkbox.setEnabled(True)
         # self.next_sample_button.setEnabled(True)
 
 
@@ -177,9 +187,11 @@ class OptimizationPanel(QWidget):
 
         # Update motor checkbox
         self.motor_checkbox.setEnabled(active_server is not None)
+        self.arm_checkbox.setEnabled(active_server is not None)
         self.next_sample_button.setEnabled(active_server is not None)
         if active_server is None:
             self.motor_checkbox.setChecked(False)
+            self.arm_checkbox.setChecked(False)
 
 
     def update_server_last_msg(self, address: str) -> None:

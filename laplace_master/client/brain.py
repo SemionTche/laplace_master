@@ -32,7 +32,7 @@ class Brain(QObject):
         super().__init__()  # heritage from QObject
         
         self.client_manager = client_manager
-
+        self.armed = False
         self.motor_control_enabled = False  # the right to move motors
         
         self.suggestions = []  # candidates suggested by the optimizer
@@ -82,6 +82,20 @@ class Brain(QObject):
         
         log.info("Brain loaded.")
 
+    def reset_shot_system(self) -> None:
+        # reset shot state
+        self.shot_number = -1
+        self.latest_shot_number = -1
+        self.new_shot_available = False
+        self.pending_motor_addresses = set()
+        self.expected_sources: set[str] = set()
+
+
+    def set_armed(self, armed: bool) -> None:
+        self.reset_shot_system()
+        log.info("System armed: starting optimization loop")
+        self.armed = armed
+
 
     def on_shot(self, shot_number: int) -> None:
         '''
@@ -89,6 +103,9 @@ class Brain(QObject):
         If the new shot number to come is not higher than the
         last shot number, it is discarded.
         '''
+        if not self.armed:
+            return
+        
         if shot_number <= self.latest_shot_number:  # if the new shot number to come is < or = to the last one we got
             return                                  # ignore it, it's a duplicate or a out-of-order
 
@@ -102,6 +119,9 @@ class Brain(QObject):
         '''
         Define where is the master in the sampling procedure.
         '''
+        if not self.armed:
+            return
+        
         if self.motion_pending:     # if the motor are moving
             return                  # let the time to the device to move
 
@@ -356,6 +376,9 @@ class Brain(QObject):
             data: (dict)
                 Measured values for the current sample.
         '''
+        if not self.armed:
+            return
+
         if not data:
             return
         
@@ -384,6 +407,7 @@ class Brain(QObject):
             return
         
         shot = values.get("shot_number")
+        log.debug(f"values = {values}")
         if shot is None:
             log.debug("Missing shot_number, dropping diagnostic")
             return
@@ -410,9 +434,16 @@ class Brain(QObject):
             if k in values:
                 self.current_measurements[address][k] = values[k]
 
+        # log.info(
+        #     f"expected_keys={expected_keys} | "
+        #     f"received_keys={list(values.keys())} | "
+        #     f"stored_keys={list(self.current_measurements[address].keys())}"
+        # )
+
         # Check completion for this address
         if len(self.current_measurements[address]) == len(expected_keys):
             self.expected_sources.discard(address)
+        # print(f"expected sources remaining: {self.expected_sources}")
         
         self.shot_number_from_diags[address] = values["shot_number"]
 

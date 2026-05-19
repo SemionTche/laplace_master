@@ -234,6 +234,10 @@ class MasterWindow(QMainWindow):
         self.optimizationPanel.motor_control_changed.connect(
             self.brain.set_motor_control
         )
+            # define if the brain is ready to brain
+        self.optimizationPanel.arm_changed.connect(
+            self.brain.set_armed
+        )
             # use the brain next element in queue when button next queue clicked
         # self.optimizationPanel.next_sample_clicked.connect(
         #     lambda position_in_queue: self.brain._next(
