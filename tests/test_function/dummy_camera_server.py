@@ -12,7 +12,9 @@ from PyQt6.QtWidgets import (
 from laplace_server.server_lhc import ServerLHC
 from laplace_server.protocol import DEVICE_CAMERA, make_get_request
 from target_function import target_function
+from target_function_noisy import target_function_noisy
 
+target = target_function_noisy  # target function to use
 
 CAMERA_ADDRESS = "tcp://*:5556"
 MOTOR_ADDRESS = "tcp://147.250.140.65:5555"
@@ -159,7 +161,7 @@ class DummyCamera(QWidget):
         x1 = torch.tensor(x1)
         x2 = torch.tensor(x2)
 
-        r = target_function(x1, x2)  # get the test function value
+        r = target(x1, x2)  # get the test function value
 
         self.value_label.setText(f"Value: {r[:, 0].item()} charge | {r[:, 1].item()} energy")
 
