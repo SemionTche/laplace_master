@@ -23,7 +23,7 @@ class DummyShot(QWidget):
         self.setWindowTitle("Dummy Shot Server")
         self.resize(360, 140)
 
-        self.shot_number = 0
+        self.shot_number = 1
         
         self.setup_zmq()
         self.setup_lhc()
