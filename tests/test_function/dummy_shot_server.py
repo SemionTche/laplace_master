@@ -24,18 +24,23 @@ class DummyShot(QWidget):
         self.resize(360, 140)
 
         self.shot_number = 0
-
-        self.setup_ui()
+        
         self.setup_zmq()
         self.setup_lhc()
 
+        self.setup_ui()
+        self.actions()
+
+    def set_shot_number(self, shot_number: int):
+       self.shot_number = shot_number
+       print(f"self.shot number changed, new value: {self.shot_number}")
 
     def setup_ui(self):
 
         label = QLabel("Shot number")
         self.shot_box = QSpinBox()
         self.shot_box.setRange(0, 1_000_000)
-        self.shot_box.setValue(0)
+        self.shot_box.setValue(1)
 
         self.button = QPushButton("test trig")
         self.button.clicked.connect(self.trigger_shot)
@@ -44,7 +49,7 @@ class DummyShot(QWidget):
         HOST_IP = sock.gethostbyname(sock.gethostname())
         self.pub_address = QLineEdit(f"tcp://{HOST_IP}:{PUB_PORT}")
         self.pub_address.setReadOnly(True)
-        self.lhc_address = QLineEdit(f"tcp://{HOST_IP}:{LHC_ADDRESS}")
+        self.lhc_address = QLineEdit(f"tcp://{HOST_IP}:{self.server_lhc.address_for_client}")
         self.lhc_address.setReadOnly(True)
 
         layout = QVBoxLayout()
@@ -63,6 +68,11 @@ class DummyShot(QWidget):
         layout.addWidget(self.button)
 
         self.setLayout(layout)
+
+    def actions(self):
+        self.shot_box.valueChanged.connect(
+            lambda shot : self.set_shot_number(shot_number=shot)
+        )
 
     ### ZMQ
     def setup_zmq(self):
