@@ -1,21 +1,34 @@
 import sys
-
+import threading
+import time
+from typing import List
+from PyQt6.QtGui import QAction
+import zmq
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout,
     QLabel, QLineEdit, QDoubleSpinBox,
-    QFormLayout,
+    QFormLayout, QSpinBox
 )
 
 from laplace_server.server_lhc import ServerLHC
 from laplace_server.protocol import DEVICE_MOTOR
 
 
-ADDRESS = "tcp://*:5555"
+MOTOR_ADDRESS = "tcp://*:5555"
+SHOT_SUB_ADDRESS = "tcp://147.250.140.65:6009"
 
 
 class DummyMotor:
     def __init__(self):
         self.positions = [0.0, 0.0]
+        self.moving = False
+
+        self.latched_positions = [0.0, 0.0]
+        self.latched_shot_number = -1
+    
+    def set_shot_number(self, shot_number: int):
+        self.latched_shot_number = shot_number
+        self.latched_positions = self.positions.copy()
 
     def set_positions(self, positions):
         print(f"[Motor] Moving to {positions}")
@@ -25,10 +38,13 @@ class DummyMotor:
 
         print(f"[Motor] New positions = {self.positions}")
 
+
     def get_data(self):
         return {
             "positions": self.positions,
-            "unit": "a.u."
+            "unit": "a.u.",
+            "shot_number": self.latched_shot_number,
+            "shot_positions": self.latched_positions
         }
 
 
@@ -41,7 +57,7 @@ class DummyMotorWindow(QWidget):
         self.motor = DummyMotor()
 
         self.server = ServerLHC(
-            address=ADDRESS,
+            address=MOTOR_ADDRESS,
             freedom=2,
             device=DEVICE_MOTOR,
             data=self.motor.get_data(),
@@ -52,11 +68,39 @@ class DummyMotorWindow(QWidget):
         self.server.set_on_position_changed(self.on_position_changed)
 
         self.init_ui()
+        self.actions()
+        self.setup_zmq()
         self.server.start()
+
+
+    def setup_zmq(self):
+        """
+        Creates the ZMQ context
+        """
+        self.ctx = zmq.Context()
+
+        # sub to shot server
+        self.sub = self.ctx.socket(zmq.SUB)
+        self.sub.connect(SHOT_SUB_ADDRESS)
+        self.sub.setsockopt_string(zmq.SUBSCRIBE, "SHOOT")
+
+        self.running = True
+        self.thread = threading.Thread(
+            target=self.loop,
+            daemon=True
+        )
+        self.thread.start()
+
 
 
     def init_ui(self):
         layout = QVBoxLayout()
+
+        self.sub_address = QLineEdit(SHOT_SUB_ADDRESS)
+        self.sub_address.setReadOnly(True)
+
+        layout.addWidget(QLabel("SHOT SUB"))
+        layout.addWidget(self.sub_address)
 
         # Address display
         layout.addWidget(QLabel("Server address:"))
@@ -82,9 +126,26 @@ class DummyMotorWindow(QWidget):
         form.addRow("Direction x:", self.spin_x)
         form.addRow("Direction y:", self.spin_y)
 
+        self.shot_box = QSpinBox()
+        self.shot_box.setRange(-1, 100000)
+        form.addRow("Motor shot number:", self.shot_box)
+
         layout.addLayout(form)
 
         self.setLayout(layout)
+
+
+    def actions(self):
+        self.spin_x.valueChanged.connect(
+            lambda: self.motor.set_positions(
+                {"0": self.spin_x.value(), "1": self.spin_y.value()}
+            )
+        )
+        self.spin_y.valueChanged.connect(
+            lambda: self.motor.set_positions(
+                {"0": self.spin_x.value(), "1": self.spin_y.value()}
+            )
+        )
 
 
     def on_position_changed(self, positions):
@@ -106,8 +167,45 @@ class DummyMotorWindow(QWidget):
         )
 
 
+    def loop(self):
+        """
+        Listen to shot server and update
+        the latest completed shot number.
+        """
+        print("[Motor] Listening to shots...")
+
+        while self.running:
+            try:
+                topic = self.sub.recv_string()
+                event = self.sub.recv_json()
+
+                next_shot = event["number"]
+                completed_shot = next_shot - 1
+
+                self.motor.set_shot_number(completed_shot)
+
+                self.server.set_data(
+                    self.motor.get_data()
+                )
+
+                self.shot_box.setValue(completed_shot)
+
+                print(
+                    f"[Motor] Shot updated -> {completed_shot}"
+                )
+
+            except Exception as e:
+                if self.running:
+                    print("[Motor] loop error:", e)
+
     def closeEvent(self, event):
+        self.running = False
+        time.sleep(0.1)
+        
         self.server.stop()
+        self.sub.close()
+        self.ctx.term()
+
         event.accept()
 
 

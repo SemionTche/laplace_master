@@ -31,9 +31,9 @@ class DummyCamera(QWidget):
         self.last_shot = -1
         self.last_result = ""
 
-        self.setup_ui()
         self.setup_zmq()
         self.setup_lhc()
+        self.setup_ui()
 
         self.running = True
         self.thread = threading.Thread(target=self.loop, daemon=True)
@@ -54,7 +54,7 @@ class DummyCamera(QWidget):
         self.motor_address = QLineEdit(MOTOR_ADDRESS)
         self.motor_address.setReadOnly(True)
 
-        self.lhc_address = QLineEdit(CAMERA_ADDRESS)
+        self.lhc_address = QLineEdit(self.server.address_for_client)
         self.lhc_address.setReadOnly(True)
 
         ### Objective names
@@ -148,8 +148,12 @@ class DummyCamera(QWidget):
         reply = sock.recv_json()
 
         sock.close()
+        
+        data = reply["payload"]["data"]
+        positions = data["shot_positions"]
+        motor_shot = data["shot_number"]
 
-        return reply["payload"]["data"]["positions"]
+        return positions
 
     ### compute test function
     def measure(self, shot: int):
