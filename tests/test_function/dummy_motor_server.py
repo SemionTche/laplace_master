@@ -128,6 +128,7 @@ class DummyMotorWindow(QWidget):
 
         self.shot_box = QSpinBox()
         self.shot_box.setRange(-1, 100000)
+        self.shot_box.setReadOnly(True)
         form.addRow("Motor shot number:", self.shot_box)
 
         layout.addLayout(form)
