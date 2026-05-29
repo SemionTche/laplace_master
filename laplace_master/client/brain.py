@@ -71,6 +71,15 @@ class Brain(QObject):
         self.pending_motor_addresses = set()        # addresses of the motors that are still moving
         self.expected_sources: set[str] = set()     # addresses of the diagnostics from which we are still waiting a key
 
+        self.desync_mode = False
+        self.desync_counter = 0
+        self.desync_threshold = 3
+        self.last_good_shot = None
+
+        self.resync_counter = 0
+        self.resync_threshold = 3
+
+
         # whether to add some logs that can be triggered often
         self.is_trig_logs = get_from_config(
             module="logs",
@@ -97,23 +106,54 @@ class Brain(QObject):
         self.armed = armed
 
 
+    # def on_shot(self, shot_number: int) -> None:
+    #     '''
+    #     Function made to update the shot number.
+    #     If the new shot number to come is not higher than the
+    #     last shot number, it is discarded.
+    #     '''
+    #     if not self.armed:
+    #         return
+        
+    #     if self.desync_mode:
+    #         self._handle_resync_shot(shot_number)
+    #         return
+        
+    #     if shot_number <= self.latest_shot_number:  # if the new shot number to come is < or = to the last one we got
+    #         return                                  # ignore it, it's a duplicate or a out-of-order
+
+    #     log.debug(f"[Shot] new shot to come={shot_number} | shot that has just been done={self.latest_shot_number} | queued_new_shot={self.new_shot_available}")
+
+    #     self.latest_shot_number = shot_number
+    #     self.new_shot_available = True
+    
+    # def on_shot(self, shot_number: int) -> None:
+    #     if not self.armed:
+    #         return
+
+    #     self._observe_shot(shot_number, source="global")
+    
     def on_shot(self, shot_number: int) -> None:
-        '''
-        Function made to update the shot number.
-        If the new shot number to come is not higher than the
-        last shot number, it is discarded.
-        '''
         if not self.armed:
             return
-        
-        if shot_number <= self.latest_shot_number:  # if the new shot number to come is < or = to the last one we got
-            return                                  # ignore it, it's a duplicate or a out-of-order
 
-        log.debug(f"[Shot] new shot to come={shot_number} | shot that has just been done={self.latest_shot_number} | queued_new_shot={self.new_shot_available}")
+        if self.desync_mode:
+            self._handle_resync_shot(shot_number)
+            return
+
+
+        # strict monotonic global stream
+        if shot_number <= self.latest_shot_number:
+            return
+
+        log.debug(f"[Shot] global={shot_number} expected_next={self.latest_shot_number}")
 
         self.latest_shot_number = shot_number
+
+        # self.shot_number = shot_number
+
         self.new_shot_available = True
-    
+        
 
     def tick(self) -> None:
         '''
@@ -124,6 +164,9 @@ class Brain(QObject):
         
         if self.motion_pending:     # if the motor are moving
             return                  # let the time to the device to move
+
+        if self.desync_mode:
+            return
 
         if not self.waiting:                             # if we are not waiting for a diagnostic (we can start next sample)
             if self.new_shot_available:                  # if a new shot has been recorded
@@ -169,6 +212,94 @@ class Brain(QObject):
         #     )
         
         return ok
+    
+    def _enter_desync_mode(self):
+        if self.desync_mode:
+            return
+
+        log.warning("DESYNC detected → freezing system")
+
+        self.desync_mode = True
+        self.waiting = False
+        self.motion_pending = False
+
+        self.expected_sources.clear()
+        self.pending_motor_addresses.clear()
+
+        self.resync_counter = 0
+        self.desync_counter = 0
+
+
+    def _exit_desync_mode(self):
+        log.info("Resynchronization successful")
+
+        self.desync_mode = False
+        self.desync_counter = 0
+        self.resync_counter = 0
+
+        self.reset_shot_system()
+
+        # self.last_good_shot = self.latest_shot_number
+
+
+    def _observe_shot(self, shot_number: int, source: str):
+        """
+        Only validates consistency against current expected shot.
+        Does NOT update any reference state.
+        """
+
+        if shot_number is None:
+            return
+
+        if self.desync_mode:
+            # only monitor stability, no decisions yet
+            return
+
+        # no expected shot yet
+        if self.shot_number == -1:
+            return
+        
+        if shot_number < self.shot_number:
+            return
+
+        # STRICT MATCH REQUIRED (NO TOLERANCE)
+        if shot_number > self.shot_number:  # !=
+            self.desync_counter += 1
+
+            log.warning(
+                f"[DESYNC suspicion] source={source} "
+                f"got={shot_number} expected={self.shot_number} "
+                f"counter={self.desync_counter}"
+            )
+
+            if self.desync_counter >= self.desync_threshold:
+                self._enter_desync_mode()
+
+            return
+
+        # correct observation → reset ONLY counter
+        self.desync_counter = 0
+
+
+
+    def _handle_resync_shot(self, shot_number: int):
+
+        # first contact
+        if self.shot_number == -1:
+            self.shot_number = shot_number
+            return
+
+        # require strict monotonic global recovery
+        if shot_number == self.latest_shot_number + 1:
+            self.desync_counter += 1
+        else:
+            self.desync_counter = 0
+
+        self.latest_shot_number = shot_number
+
+        if self.desync_counter >= self.desync_threshold:
+            self._exit_desync_mode()
+
 
     def on_opt_data(self, 
                     opt_address: str, 
@@ -331,8 +462,15 @@ class Brain(QObject):
 
 
     def _motors_match_target(self, address, current, target):        
-        current_positions = current.get("positions", [])
+        current_positions = current.get("shot_positions", [])
         target_positions = target.get(address)
+        
+        # motor_shot = current.get("shot_number")
+        # if motor_shot is not None:
+        #     self._observe_shot(motor_shot, source="motor")
+        
+        # motor_shot = current.get("shot_number")
+        # self._observe_shot(motor_shot, source="motor")
 
         if target_positions is None:
             return False
@@ -406,8 +544,10 @@ class Brain(QObject):
             log.debug(f"The type of the data ({type(values)}) received from the diagnostic {address} is not {dict}.")
             return
         
-        shot = values.get("shot_number")
-        log.debug(f"values = {values}")
+        shot = values.get("shot_number", -3)
+        self._observe_shot(shot, source=f"diag:{address}")
+        # shot = values.get("shot_number")
+        # log.debug(f"values = {values}")
         if shot is None:
             log.debug("Missing shot_number, dropping diagnostic")
             return
