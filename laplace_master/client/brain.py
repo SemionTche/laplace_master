@@ -47,6 +47,7 @@ class Brain(QObject):
         self.motors: dict[str, list[dict]] = {}  # mask to determine which motor can move and what was the position when state changed
         
         self.shot_number_from_diags = {}    # the diagnostic addresses and the shot number they sent
+        self.motor_position_validated_at_shot = {}
 
         ### loading tolerances
         self.tolerance_gas = get_from_config(
@@ -406,6 +407,8 @@ class Brain(QObject):
         self.waiting = True                     # we start to wait for a measure (some diagnostics)
         self.motion_pending = True              # we need to move motors
         self.current_measurements = {}          # gather the measures
+        self.shot_number_from_diags = {}
+        self.motor_position_validated_at_shot = {}
 
         self.pending_motor_addresses = set(self.current["inputs"].keys())  # addresses of the motors to move
         self.expected_sources = set(self.obj_spec.keys())                  # addresses of the diagnostics we are waiting for
@@ -453,6 +456,10 @@ class Brain(QObject):
             return
 
         target = self.commanded_inputs
+
+        motor_shot = positions.get("shot_number")
+        if motor_shot is not None:
+            self.motor_position_validated_at_shot[address] = motor_shot
 
         if self._motors_match_target(address, positions, target):
             self.pending_motor_addresses.discard(address)
@@ -544,7 +551,7 @@ class Brain(QObject):
             log.debug(f"The type of the data ({type(values)}) received from the diagnostic {address} is not {dict}.")
             return
         
-        shot = values.get("shot_number", -3)
+        shot = values.get("shot_number")
         self._observe_shot(shot, source=f"diag:{address}")
         # shot = values.get("shot_number")
         # log.debug(f"values = {values}")
@@ -611,17 +618,23 @@ class Brain(QObject):
             "batch": self.current["batch"],
             "candidate": self.current["candidate"],
             "shot_number_from_master": self.shot_number,
-            "shot_number_from_diags": self.shot_number_from_diags
+            "shot_number_from_diags": self.shot_number_from_diags,
+            "self.motor_position_validated_at_shot": self.motor_position_validated_at_shot
         })
 
         for key in self.shot_number_from_diags.keys():
             if self.shot_number != self.shot_number_from_diags[key]:
                 log.error("The shot number from the master and the diagnostics are different.")
+        
+        for key in self.motor_position_validated_at_shot.keys():
+            if self.shot_number != self.motor_position_validated_at_shot[key]:
+                log.error("The shot number from the master and the motors are different.")
 
         self.current = None
         self.waiting = False
         self.shot_number = -1
         self.shot_number_from_diags = {}
+        self.motor_position_validated_at_shot = {}
         self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # if self.suggestions:
