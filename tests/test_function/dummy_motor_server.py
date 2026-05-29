@@ -1,8 +1,7 @@
 import sys
 import threading
 import time
-from typing import List
-from PyQt6.QtGui import QAction
+
 import zmq
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout,
@@ -42,6 +41,7 @@ class DummyMotor:
     def get_data(self):
         return {
             "positions": self.positions,
+            "moving": self.moving,
             "unit": "a.u.",
             "shot_number": self.latched_shot_number,
             "shot_positions": self.latched_positions
