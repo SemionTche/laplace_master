@@ -47,7 +47,7 @@ class Brain(QObject):
         self.motors: dict[str, list[dict]] = {}  # mask to determine which motor can move and what was the position when state changed
         
         self.shot_number_from_diags = {}    # the diagnostic addresses and the shot number they sent
-        self.motor_position_validated_at_shot = {}
+        # self.motor_position_validated_at_shot = {}
 
         ### loading tolerances
         self.tolerance_gas = get_from_config(
@@ -243,7 +243,7 @@ class Brain(QObject):
         # self.last_good_shot = self.latest_shot_number
 
 
-    def _observe_shot(self, shot_number: int, source: str):
+    def _observe_shot(self, shot_number: int | None, source: str):
         """
         Only validates consistency against current expected shot.
         Does NOT update any reference state.
@@ -408,7 +408,7 @@ class Brain(QObject):
         self.motion_pending = True              # we need to move motors
         self.current_measurements = {}          # gather the measures
         self.shot_number_from_diags = {}
-        self.motor_position_validated_at_shot = {}
+        # self.motor_position_validated_at_shot = {}
 
         self.pending_motor_addresses = set(self.current["inputs"].keys())  # addresses of the motors to move
         self.expected_sources = set(self.obj_spec.keys())                  # addresses of the diagnostics we are waiting for
@@ -457,9 +457,9 @@ class Brain(QObject):
 
         target = self.commanded_inputs
 
-        motor_shot = positions.get("shot_number")
-        if motor_shot is not None:
-            self.motor_position_validated_at_shot[address] = motor_shot
+        # motor_shot = positions.get("shot_number")
+        # if motor_shot is not None:
+        #     self.motor_position_validated_at_shot[address] = motor_shot
 
         if self._motors_match_target(address, positions, target):
             self.pending_motor_addresses.discard(address)
@@ -469,7 +469,8 @@ class Brain(QObject):
 
 
     def _motors_match_target(self, address, current, target):        
-        current_positions = current.get("shot_positions", [])
+        # current_positions = current.get("shot_positions", [])
+        current_positions = current.get("positions", [])
         target_positions = target.get(address)
         
         # motor_shot = current.get("shot_number")
@@ -619,22 +620,22 @@ class Brain(QObject):
             "candidate": self.current["candidate"],
             "shot_number_from_master": self.shot_number,
             "shot_number_from_diags": self.shot_number_from_diags,
-            "self.motor_position_validated_at_shot": self.motor_position_validated_at_shot
+            # "self.motor_position_validated_at_shot": self.motor_position_validated_at_shot
         })
 
         for key in self.shot_number_from_diags.keys():
             if self.shot_number != self.shot_number_from_diags[key]:
                 log.error("The shot number from the master and the diagnostics are different.")
         
-        for key in self.motor_position_validated_at_shot.keys():
-            if self.shot_number != self.motor_position_validated_at_shot[key]:
-                log.error("The shot number from the master and the motors are different.")
+        # for key in self.motor_position_validated_at_shot.keys():
+        #     if self.shot_number != self.motor_position_validated_at_shot[key]:
+        #         log.error("The shot number from the master and the motors are different.")
 
         self.current = None
         self.waiting = False
         self.shot_number = -1
         self.shot_number_from_diags = {}
-        self.motor_position_validated_at_shot = {}
+        # self.motor_position_validated_at_shot = {}
         self.queue_updated.emit(self.suggestions, self.obj_spec)
 
         # if self.suggestions:
