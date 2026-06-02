@@ -117,7 +117,7 @@ class ServerControlWidget(QWidget):
         icon = self.connected_icon if self.connected else self.disconnected_icon
         self.state_icon.setPixmap(icon.pixmap(16, 16))
 
-        log.debug(f"{self.name} {self.motor_index} from {self.address} {"enabled" if self.is_selected() else "disabled"}.")
+        log.debug(f"{self.name} {self.motor_index} from {self.address} {'enabled' if self.is_selected() else 'disabled'}.")
         self.motor_connection.emit(
             str(self.address), 
             int(self.motor_index), 

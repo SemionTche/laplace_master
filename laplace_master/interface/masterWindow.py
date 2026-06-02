@@ -371,7 +371,7 @@ class MasterWindow(QMainWindow):
             )
             log.info(f"New shot number server added:")
         
-        log.info(f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
+        log.info(f"name={info.name or 'Unknown'}, address={info.address}, freedom={info.freedom}")
 
 
     def route_server_data(self, address: str, data: dict):
