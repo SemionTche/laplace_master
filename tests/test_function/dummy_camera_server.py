@@ -14,7 +14,7 @@ from laplace_server.protocol import DEVICE_CAMERA, make_get_request
 from target_function import target_function
 from target_function_noisy import target_function_noisy
 
-target = target_function_noisy  # target function to use
+target = target_function  # target function to use
 
 CAMERA_ADDRESS = "tcp://*:5556"
 MOTOR_ADDRESS = "tcp://147.250.140.65:5555"
