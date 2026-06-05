@@ -47,9 +47,9 @@ class DummyShot(QWidget):
 
         # addresses
         HOST_IP = sock.gethostbyname(sock.gethostname())
-        self.pub_address = QLineEdit(f"tcp://{HOST_IP}:{PUB_PORT}")
+        self.pub_address = QLineEdit(f"{HOST_IP}:{PUB_PORT}")
         self.pub_address.setReadOnly(True)
-        self.lhc_address = QLineEdit(f"tcp://{HOST_IP}:{self.server_lhc.address_for_client}")
+        self.lhc_address = QLineEdit(f"{self.server_lhc.address_for_client}")
         self.lhc_address.setReadOnly(True)
 
         layout = QVBoxLayout()
