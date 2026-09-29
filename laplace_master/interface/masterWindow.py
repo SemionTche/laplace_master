@@ -234,6 +234,10 @@ class MasterWindow(QMainWindow):
         self.optimizationPanel.motor_control_changed.connect(
             self.brain.set_motor_control
         )
+            # define if the brain is ready to brain
+        self.optimizationPanel.arm_changed.connect(
+            self.brain.set_armed
+        )
             # use the brain next element in queue when button next queue clicked
         # self.optimizationPanel.next_sample_clicked.connect(
         #     lambda position_in_queue: self.brain._next(
@@ -367,7 +371,7 @@ class MasterWindow(QMainWindow):
             )
             log.info(f"New shot number server added:")
         
-        log.info(f"name={info.name or "Unknown"}, address={info.address}, freedom={info.freedom}")
+        log.info(f"name={info.name or 'Unknown'}, address={info.address}, freedom={info.freedom}")
 
 
     def route_server_data(self, address: str, data: dict):
